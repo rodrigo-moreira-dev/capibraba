@@ -1,0 +1,112 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/lobby.gd" id="1_lobby"]
+
+[node name="Lobby" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_lobby")
+
+[node name="BG" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.07, 0.07, 0.11, 1)
+
+[node name="CC" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="PC" type="PanelContainer" parent="CC"]
+custom_minimum_size = Vector2(420, 0)
+
+[node name="MC" type="MarginContainer" parent="CC/PC"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_top = 28
+theme_override_constants/margin_bottom = 28
+
+[node name="VBox" type="VBoxContainer" parent="CC/PC/MC"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+text = "CAPIBRABA"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 36
+
+[node name="Sep1" type="HSeparator" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+text = "Seu nome:"
+
+[node name="NameInput" type="LineEdit" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+placeholder_text = "Capivara"
+custom_minimum_size = Vector2(0, 36)
+
+[node name="Sep2" type="HSeparator" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+
+[node name="HostBtn" type="Button" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 44)
+text = "Hospedar Partida"
+
+[node name="Sep3" type="HSeparator" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+
+[node name="IPLabel" type="Label" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+text = "IP do host:"
+
+[node name="JoinRow" type="HBoxContainer" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="IPInput" type="LineEdit" parent="CC/PC/MC/VBox/JoinRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "127.0.0.1"
+custom_minimum_size = Vector2(0, 36)
+
+[node name="JoinBtn" type="Button" parent="CC/PC/MC/VBox/JoinRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(90, 36)
+text = "Entrar"
+
+[node name="StatusLabel" type="Label" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+modulate = Color(1, 0.85, 0.2, 1)
+custom_minimum_size = Vector2(0, 20)
+
+[node name="Sep4" type="HSeparator" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+
+[node name="PlayersHeader" type="Label" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+text = "Jogadores na sala:"
+
+[node name="PlayerList" type="VBoxContainer" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 60)
+
+[node name="Sep5" type="HSeparator" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+
+[node name="StartBtn" type="Button" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 48)
+text = "Iniciar Jogo"
+visible = false

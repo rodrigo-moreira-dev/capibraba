@@ -1,6 +1,6 @@
-[gd_scene load_steps=16 format=3]
+[gd_scene load_steps=17 format=3]
 
-[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="1_player"]
+[ext_resource type="Script" path="res://scripts/game/game_manager.gd" id="1_gm"]
 
 [sub_resource type="ProceduralSkyMaterial" id="SkyMat_1"]
 sky_top_color = Color(0.15, 0.35, 0.85, 1)
@@ -57,9 +57,6 @@ rotation = Vector3(-0.872665, 0.523599, 0)
 light_energy = 1.4
 shadow_enabled = true
 
-[node name="Player" parent="." instance=ExtResource("1_player")]
-position = Vector3(0, 2, 0)
-
 [node name="Floor" type="StaticBody3D" parent="."]
 position = Vector3(0, -0.5, 0)
 
@@ -109,3 +106,11 @@ surface_material_override/0 = SubResource("Mat_wall")
 
 [node name="Collision" type="CollisionShape3D" parent="WallJumpWall"]
 shape = SubResource("BoxShape3D_wall")
+
+[node name="Players" type="Node3D" parent="."]
+
+[node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="."]
+spawn_path = NodePath("../Players")
+
+[node name="GameManager" type="Node" parent="."]
+script = ExtResource("1_gm")

@@ -14,6 +14,11 @@ var _pitch := deg_to_rad(-20.0)
 
 
 func _ready() -> void:
+	if not get_parent().is_multiplayer_authority():
+		$SpringArm3D/Camera3D.current = false
+		set_physics_process(false)
+		set_process_unhandled_input(false)
+		return
 	top_level = true
 	global_position = _player.global_position + Vector3(0, 0.8, 0)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED

@@ -43,11 +43,15 @@ var _dash_dir := Vector3.ZERO
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if not is_multiplayer_authority():
+		return
 	if event.is_action_pressed("jump"):
 		_jump_buffer_timer = jump_buffer_time
 
 
 func _physics_process(delta: float) -> void:
+	if not is_multiplayer_authority():
+		return  # Position received via MultiplayerSynchronizer
 	_tick_timers(delta)
 	_apply_gravity(delta)
 	_process_dash(delta)

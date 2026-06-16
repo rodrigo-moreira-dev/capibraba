@@ -11,10 +11,14 @@ config_version=5
 [application]
 
 config/name="Capibraba"
-run/main_scene="res://scenes/levels/test_arena.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
-config/run/main_scene="res://scenes/levels/test_arena.tscn"
+run/main_scene="res://scenes/ui/lobby.tscn"
+config/run/main_scene="res://scenes/ui/lobby.tscn"
+
+[autoload]
+
+NetworkManager="*res://scripts/network/network_manager.gd"
 
 [input]
 

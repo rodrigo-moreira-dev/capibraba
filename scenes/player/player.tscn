@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/player.gd" id="1_player"]
 [ext_resource type="Script" path="res://scripts/player/player_camera.gd" id="2_camera"]
@@ -14,6 +14,16 @@ height = 1.05
 [sub_resource type="StandardMaterial3D" id="Material_player"]
 albedo_color = Color(0.72, 0.56, 0.28, 1)
 roughness = 0.8
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_1"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/sync = true
+properties/0/watch_mode = 0
+properties/1/path = NodePath("MeshPivot:rotation")
+properties/1/spawn = true
+properties/1/sync = true
+properties/1/watch_mode = 0
 
 [node name="Player" type="CharacterBody3D"]
 script = ExtResource("1_player")
@@ -36,3 +46,6 @@ script = ExtResource("2_camera")
 spring_length = 5.0
 
 [node name="Camera3D" type="Camera3D" parent="CameraRig/SpringArm3D"]
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_config = SubResource("SceneReplicationConfig_1")
