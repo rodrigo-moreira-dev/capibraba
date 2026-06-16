@@ -11,13 +11,10 @@ config_version=5
 [application]
 
 config/name="Capibraba"
+run/main_scene="res://scenes/levels/test_arena.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 config/run/main_scene="res://scenes/levels/test_arena.tscn"
-
-[physics]
-
-3d/physics_engine="Jolt Physics"
 
 [input]
 
@@ -77,6 +74,10 @@ look_down={
 "events": [Object(InputEventJoypadMotion,"resource_local_to_scene":false,"resource_name":"","device":-1,"axis":3,"axis_value":1.0,"script":null)
 ]
 }
+
+[physics]
+
+3d/physics_engine="Jolt Physics"
 
 [rendering]
 

@@ -10,11 +10,12 @@ var _yaw := 0.0
 var _pitch := deg_to_rad(-20.0)
 
 @onready var spring_arm: SpringArm3D = $SpringArm3D
+@onready var _player: Node3D = get_parent() as Node3D
 
 
 func _ready() -> void:
 	top_level = true
-	global_position = get_parent().global_position + Vector3(0, 0.8, 0)
+	global_position = _player.global_position + Vector3(0, 0.8, 0)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
@@ -39,7 +40,7 @@ func _physics_process(delta: float) -> void:
 		deg_to_rad(pitch_min), deg_to_rad(pitch_max)
 	)
 
-	var target := get_parent().global_position + Vector3(0, 0.8, 0)
+	var target := _player.global_position + Vector3(0, 0.8, 0)
 	global_position = global_position.lerp(target, follow_speed * delta)
 
 	rotation.y = _yaw
