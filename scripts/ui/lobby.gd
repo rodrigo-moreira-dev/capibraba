@@ -1,6 +1,16 @@
 extends Control
 
+const PALETTE := [
+	Color(0.72, 0.56, 0.28),
+	Color(0.40, 0.24, 0.12),
+	Color(0.75, 0.30, 0.15),
+	Color(0.60, 0.60, 0.60),
+	Color(0.90, 0.55, 0.08),
+	Color(0.50, 0.25, 0.78),
+]
+
 @onready var name_input:   LineEdit      = $CC/PC/MC/VBox/NameInput
+@onready var color_row:    HBoxContainer = $CC/PC/MC/VBox/ColorRow
 @onready var host_btn:     Button        = $CC/PC/MC/VBox/HostBtn
 @onready var ip_input:     LineEdit      = $CC/PC/MC/VBox/JoinRow/IPInput
 @onready var join_btn:     Button        = $CC/PC/MC/VBox/JoinRow/JoinBtn
@@ -8,8 +18,11 @@ extends Control
 @onready var player_list:  VBoxContainer = $CC/PC/MC/VBox/PlayerList
 @onready var start_btn:    Button        = $CC/PC/MC/VBox/StartBtn
 
+var _color_btns: Array = []
+
 
 func _ready() -> void:
+	_build_color_row()
 	NetworkManager.players_updated.connect(_refresh)
 	NetworkManager.connection_failed.connect(func(): _set_status("Falha na conexão.", true))
 	NetworkManager.server_disconnected.connect(
@@ -71,6 +84,44 @@ func _apply_name() -> void:
 	var n := name_input.text.strip_edges()
 	NetworkManager.my_data["name"] = n if not n.is_empty() else "Capivara"
 
+
+# ── Color picker ──────────────────────────────────────────────────────────────
+
+func _build_color_row() -> void:
+	for i in PALETTE.size():
+		var btn := Button.new()
+		btn.custom_minimum_size = Vector2(36, 36)
+		btn.text = ""
+		_apply_swatch(btn, i, i == 0)
+		var idx := i
+		btn.pressed.connect(func(): _select_color(idx))
+		color_row.add_child(btn)
+		_color_btns.append(btn)
+
+
+func _select_color(idx: int) -> void:
+	NetworkManager.my_data["color_index"] = idx
+	for i in _color_btns.size():
+		_apply_swatch(_color_btns[i], i, i == idx)
+
+
+func _apply_swatch(btn: Button, idx: int, selected: bool) -> void:
+	var s := StyleBoxFlat.new()
+	s.bg_color = PALETTE[idx]
+	s.set_corner_radius_all(5)
+	if selected:
+		s.border_width_left   = 3
+		s.border_width_right  = 3
+		s.border_width_top    = 3
+		s.border_width_bottom = 3
+		s.border_color        = Color.WHITE
+	btn.add_theme_stylebox_override("normal",   s)
+	btn.add_theme_stylebox_override("hover",    s)
+	btn.add_theme_stylebox_override("pressed",  s)
+	btn.add_theme_stylebox_override("focus",    s)
+
+
+# ── Scene transition ──────────────────────────────────────────────────────────
 
 @rpc("authority", "call_local", "reliable")
 func _start_game() -> void:

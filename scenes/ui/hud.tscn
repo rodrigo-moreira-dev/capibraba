@@ -1,0 +1,18 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/hud.gd" id="1_hud"]
+
+[node name="HUD" type="CanvasLayer"]
+script = ExtResource("1_hud")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+offset_left = 12.0
+offset_top = 12.0
+theme_override_constants/separation = 4
+
+[node name="Title" type="Label" parent="VBox"]
+text = "Jogadores:"
+theme_override_font_sizes/font_size = 14
+
+[node name="PlayerList" type="VBoxContainer" parent="VBox"]
+theme_override_constants/separation = 2

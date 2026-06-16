@@ -10,7 +10,7 @@ const MAX_PEERS    := 4
 
 # {peer_id: {name}} — synced on all peers
 var players: Dictionary = {}
-var my_data: Dictionary = {name = "Capivara"}
+var my_data: Dictionary = {name = "Capivara", color_index = 0}
 
 
 func host(port: int = DEFAULT_PORT) -> void:
