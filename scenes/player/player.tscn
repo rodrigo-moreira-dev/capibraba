@@ -1,0 +1,38 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/player/player.gd" id="1_player"]
+[ext_resource type="Script" path="res://scripts/player/player_camera.gd" id="2_camera"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
+radius = 0.38
+height = 1.1
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_1"]
+radius = 0.36
+height = 1.05
+
+[sub_resource type="StandardMaterial3D" id="Material_player"]
+albedo_color = Color(0.72, 0.56, 0.28, 1)
+roughness = 0.8
+
+[node name="Player" type="CharacterBody3D"]
+script = ExtResource("1_player")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.6, 0)
+shape = SubResource("CapsuleShape3D_1")
+
+[node name="MeshPivot" type="Node3D" parent="."]
+position = Vector3(0, 0.6, 0)
+
+[node name="BodyMesh" type="MeshInstance3D" parent="MeshPivot"]
+mesh = SubResource("CapsuleMesh_1")
+surface_material_override/0 = SubResource("Material_player")
+
+[node name="CameraRig" type="Node3D" parent="."]
+script = ExtResource("2_camera")
+
+[node name="SpringArm3D" type="SpringArm3D" parent="CameraRig"]
+spring_length = 5.0
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig/SpringArm3D"]

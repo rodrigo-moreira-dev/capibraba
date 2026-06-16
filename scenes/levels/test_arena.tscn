@@ -1,0 +1,111 @@
+[gd_scene load_steps=16 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="1_player"]
+
+[sub_resource type="ProceduralSkyMaterial" id="SkyMat_1"]
+sky_top_color = Color(0.15, 0.35, 0.85, 1)
+sky_horizon_color = Color(0.65, 0.8, 1.0, 1)
+ground_horizon_color = Color(0.65, 0.8, 1.0, 1)
+ground_bottom_color = Color(0.45, 0.55, 0.65, 1)
+
+[sub_resource type="Sky" id="Sky_1"]
+sky_material = SubResource("SkyMat_1")
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 2
+sky = SubResource("Sky_1")
+ambient_light_source = 3
+ambient_light_energy = 0.8
+
+[sub_resource type="BoxMesh" id="BoxMesh_floor"]
+size = Vector3(40, 1, 40)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_floor"]
+size = Vector3(40, 1, 40)
+
+[sub_resource type="StandardMaterial3D" id="Mat_floor"]
+albedo_color = Color(0.32, 0.52, 0.22, 1)
+roughness = 0.9
+
+[sub_resource type="BoxMesh" id="BoxMesh_plat"]
+size = Vector3(5, 1, 5)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_plat"]
+size = Vector3(5, 1, 5)
+
+[sub_resource type="StandardMaterial3D" id="Mat_plat"]
+albedo_color = Color(0.55, 0.42, 0.3, 1)
+roughness = 0.85
+
+[sub_resource type="BoxMesh" id="BoxMesh_wall"]
+size = Vector3(1, 7, 6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_wall"]
+size = Vector3(1, 7, 6)
+
+[sub_resource type="StandardMaterial3D" id="Mat_wall"]
+albedo_color = Color(0.6, 0.6, 0.62, 1)
+roughness = 0.75
+
+[node name="TestArena" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_1")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation = Vector3(-0.872665, 0.523599, 0)
+light_energy = 1.4
+shadow_enabled = true
+
+[node name="Player" parent="." instance=ExtResource("1_player")]
+position = Vector3(0, 2, 0)
+
+[node name="Floor" type="StaticBody3D" parent="."]
+position = Vector3(0, -0.5, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Floor"]
+mesh = SubResource("BoxMesh_floor")
+surface_material_override/0 = SubResource("Mat_floor")
+
+[node name="Collision" type="CollisionShape3D" parent="Floor"]
+shape = SubResource("BoxShape3D_floor")
+
+[node name="Platform1" type="StaticBody3D" parent="."]
+position = Vector3(-6, 2, -5)
+
+[node name="Mesh" type="MeshInstance3D" parent="Platform1"]
+mesh = SubResource("BoxMesh_plat")
+surface_material_override/0 = SubResource("Mat_plat")
+
+[node name="Collision" type="CollisionShape3D" parent="Platform1"]
+shape = SubResource("BoxShape3D_plat")
+
+[node name="Platform2" type="StaticBody3D" parent="."]
+position = Vector3(5, 4, -10)
+
+[node name="Mesh" type="MeshInstance3D" parent="Platform2"]
+mesh = SubResource("BoxMesh_plat")
+surface_material_override/0 = SubResource("Mat_plat")
+
+[node name="Collision" type="CollisionShape3D" parent="Platform2"]
+shape = SubResource("BoxShape3D_plat")
+
+[node name="Platform3" type="StaticBody3D" parent="."]
+position = Vector3(-4, 6, -14)
+
+[node name="Mesh" type="MeshInstance3D" parent="Platform3"]
+mesh = SubResource("BoxMesh_plat")
+surface_material_override/0 = SubResource("Mat_plat")
+
+[node name="Collision" type="CollisionShape3D" parent="Platform3"]
+shape = SubResource("BoxShape3D_plat")
+
+[node name="WallJumpWall" type="StaticBody3D" parent="."]
+position = Vector3(10, 3.5, 3)
+
+[node name="Mesh" type="MeshInstance3D" parent="WallJumpWall"]
+mesh = SubResource("BoxMesh_wall")
+surface_material_override/0 = SubResource("Mat_wall")
+
+[node name="Collision" type="CollisionShape3D" parent="WallJumpWall"]
+shape = SubResource("BoxShape3D_wall")
