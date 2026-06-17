@@ -1,0 +1,103 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/settings.gd" id="1_st"]
+
+[node name="Settings" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_st")
+
+[node name="BG" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.05, 0.05, 0.10, 1)
+
+[node name="CC" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="PC" type="PanelContainer" parent="CC"]
+custom_minimum_size = Vector2(460, 0)
+
+[node name="MC" type="MarginContainer" parent="CC/PC"]
+layout_mode = 2
+theme_override_constants/margin_left = 36
+theme_override_constants/margin_right = 36
+theme_override_constants/margin_top = 36
+theme_override_constants/margin_bottom = 36
+
+[node name="VBox" type="VBoxContainer" parent="CC/PC/MC"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+text = "CONFIGURAÇÕES"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 28
+
+[node name="Sep1" type="HSeparator" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+
+[node name="AudioLbl" type="Label" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+text = "Áudio"
+theme_override_font_sizes/font_size = 14
+modulate = Color(0.75, 0.75, 0.75, 1)
+
+[node name="VolumeRow" type="HBoxContainer" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="VolLabel" type="Label" parent="CC/PC/MC/VBox/VolumeRow"]
+layout_mode = 2
+size_flags_vertical = 4
+text = "Volume Geral"
+custom_minimum_size = Vector2(120, 0)
+
+[node name="VolumeSlider" type="HSlider" parent="CC/PC/MC/VBox/VolumeRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+min_value = 0.0
+max_value = 1.0
+step = 0.01
+value = 1.0
+custom_minimum_size = Vector2(0, 24)
+
+[node name="Sep2" type="HSeparator" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+
+[node name="DisplayLbl" type="Label" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+text = "Vídeo"
+theme_override_font_sizes/font_size = 14
+modulate = Color(0.75, 0.75, 0.75, 1)
+
+[node name="FullscreenRow" type="HBoxContainer" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="FsLabel" type="Label" parent="CC/PC/MC/VBox/FullscreenRow"]
+layout_mode = 2
+size_flags_vertical = 4
+text = "Tela Cheia"
+custom_minimum_size = Vector2(120, 0)
+
+[node name="FullscreenCheck" type="CheckButton" parent="CC/PC/MC/VBox/FullscreenRow"]
+layout_mode = 2
+size_flags_vertical = 4
+
+[node name="Sep3" type="HSeparator" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+
+[node name="BackBtn" type="Button" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 44)
+text = "← Voltar ao Menu"

@@ -1,9 +1,19 @@
 extends CanvasLayer
 
+const MODE_NAMES := {
+	"last_standing": "Last Capivara Standing",
+	"capivara_bomb": "Capivara Bomb",
+	"king_of_hill":  "King of the Hill",
+	"race":          "Corrida de Obstáculos",
+	"food_theft":    "Roubo de Comida",
+}
+
+@onready var mode_lbl:   Label         = $VBox/ModeLbl
 @onready var player_list: VBoxContainer = $VBox/PlayerList
 
 
 func _ready() -> void:
+	mode_lbl.text = MODE_NAMES.get(GameSettings.selected_mode, "Modo Livre")
 	NetworkManager.players_updated.connect(_refresh)
 	_refresh()
 

@@ -1,0 +1,58 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/pause_menu.gd" id="1_pm"]
+
+[node name="PauseMenu" type="CanvasLayer"]
+process_mode = 3
+script = ExtResource("1_pm")
+
+[node name="Overlay" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.0, 0.0, 0.0, 0.65)
+
+[node name="CC" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="PC" type="PanelContainer" parent="CC"]
+custom_minimum_size = Vector2(320, 0)
+
+[node name="MC" type="MarginContainer" parent="CC/PC"]
+layout_mode = 2
+theme_override_constants/margin_left = 36
+theme_override_constants/margin_right = 36
+theme_override_constants/margin_top = 36
+theme_override_constants/margin_bottom = 36
+
+[node name="VBox" type="VBoxContainer" parent="CC/PC/MC"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="PausedLbl" type="Label" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+text = "PAUSADO"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 32
+
+[node name="Sep" type="HSeparator" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+
+[node name="ResumeBtn" type="Button" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 50)
+text = "Continuar"
+
+[node name="MenuBtn" type="Button" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 44)
+text = "Menu Principal"
+
+[node name="QuitBtn" type="Button" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 44)
+text = "Sair do Jogo"

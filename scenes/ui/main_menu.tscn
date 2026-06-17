@@ -1,0 +1,65 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_mm"]
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_mm")
+
+[node name="BG" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.05, 0.05, 0.10, 1)
+
+[node name="CC" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="VBox" type="VBoxContainer" parent="CC"]
+layout_mode = 2
+custom_minimum_size = Vector2(340, 0)
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="CC/VBox"]
+layout_mode = 2
+text = "CAPIBRABA"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 72
+
+[node name="Tagline" type="Label" parent="CC/VBox"]
+layout_mode = 2
+text = "o jogo da capivara radical"
+horizontal_alignment = 1
+modulate = Color(0.75, 0.75, 0.75, 1)
+theme_override_font_sizes/font_size = 15
+
+[node name="Spacer" type="Control" parent="CC/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 24)
+
+[node name="PlayBtn" type="Button" parent="CC/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 56)
+text = "JOGAR"
+
+[node name="SettingsBtn" type="Button" parent="CC/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 46)
+text = "CONFIGURAÇÕES"
+
+[node name="CreditsBtn" type="Button" parent="CC/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 46)
+text = "CRÉDITOS"
+
+[node name="QuitBtn" type="Button" parent="CC/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 46)
+text = "SAIR"

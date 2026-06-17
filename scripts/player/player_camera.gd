@@ -31,9 +31,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			_pitch - event.relative.y * mouse_sensitivity,
 			deg_to_rad(pitch_min), deg_to_rad(pitch_max)
 		)
-	if event.is_action_pressed("ui_cancel"):
-		var captured := Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if captured else Input.MOUSE_MODE_CAPTURED
 
 
 func _physics_process(delta: float) -> void:

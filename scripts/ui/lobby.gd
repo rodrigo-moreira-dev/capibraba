@@ -9,19 +9,37 @@ const PALETTE := [
 	Color(0.50, 0.25, 0.78),
 ]
 
-@onready var name_input:   LineEdit      = $CC/PC/MC/VBox/NameInput
-@onready var color_row:    HBoxContainer = $CC/PC/MC/VBox/ColorRow
-@onready var host_btn:     Button        = $CC/PC/MC/VBox/HostBtn
-@onready var ip_input:     LineEdit      = $CC/PC/MC/VBox/JoinRow/IPInput
-@onready var join_btn:     Button        = $CC/PC/MC/VBox/JoinRow/JoinBtn
-@onready var status_label: Label         = $CC/PC/MC/VBox/StatusLabel
+const MODE_NAMES := {
+	"last_standing": "Last Capivara Standing",
+	"capivara_bomb": "Capivara Bomb",
+	"king_of_hill":  "King of the Hill",
+	"race":          "Corrida de Obstáculos",
+	"food_theft":    "Roubo de Comida",
+}
+
+@onready var back_btn:    Button        = $CC/PC/MC/VBox/BackBtn
+@onready var mode_label:  Label         = $CC/PC/MC/VBox/ModeLabel
+@onready var name_input:  LineEdit      = $CC/PC/MC/VBox/NameInput
+@onready var color_row:   HBoxContainer = $CC/PC/MC/VBox/ColorRow
+@onready var host_btn:    Button        = $CC/PC/MC/VBox/HostBtn
+@onready var ip_input:    LineEdit      = $CC/PC/MC/VBox/JoinRow/IPInput
+@onready var join_btn:    Button        = $CC/PC/MC/VBox/JoinRow/JoinBtn
+@onready var status_label: Label        = $CC/PC/MC/VBox/StatusLabel
 @onready var player_list:  VBoxContainer = $CC/PC/MC/VBox/PlayerList
-@onready var start_btn:    Button        = $CC/PC/MC/VBox/StartBtn
+@onready var start_btn:   Button        = $CC/PC/MC/VBox/StartBtn
 
 var _color_btns: Array = []
 
 
 func _ready() -> void:
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	mode_label.text = "Modo: " + MODE_NAMES.get(GameSettings.selected_mode, "—")
+
+	back_btn.pressed.connect(func() -> void:
+		NetworkManager.disconnect_game()
+		get_tree().change_scene_to_file("res://scenes/ui/mode_select.tscn")
+	)
+
 	_build_color_row()
 	NetworkManager.players_updated.connect(_refresh)
 	NetworkManager.connection_failed.connect(func(): _set_status("Falha na conexão.", true))
@@ -115,10 +133,10 @@ func _apply_swatch(btn: Button, idx: int, selected: bool) -> void:
 		s.border_width_top    = 3
 		s.border_width_bottom = 3
 		s.border_color        = Color.WHITE
-	btn.add_theme_stylebox_override("normal",   s)
-	btn.add_theme_stylebox_override("hover",    s)
-	btn.add_theme_stylebox_override("pressed",  s)
-	btn.add_theme_stylebox_override("focus",    s)
+	btn.add_theme_stylebox_override("normal",  s)
+	btn.add_theme_stylebox_override("hover",   s)
+	btn.add_theme_stylebox_override("pressed", s)
+	btn.add_theme_stylebox_override("focus",   s)
 
 
 # ── Scene transition ──────────────────────────────────────────────────────────

@@ -36,11 +36,23 @@ theme_override_constants/margin_bottom = 28
 layout_mode = 2
 theme_override_constants/separation = 12
 
+[node name="BackBtn" type="Button" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+text = "← Voltar"
+alignment = 0
+
 [node name="Title" type="Label" parent="CC/PC/MC/VBox"]
 layout_mode = 2
 text = "CAPIBRABA"
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 36
+
+[node name="ModeLabel" type="Label" parent="CC/PC/MC/VBox"]
+layout_mode = 2
+text = "Modo: —"
+horizontal_alignment = 1
+modulate = Color(0.95, 0.72, 0.15, 1)
+theme_override_font_sizes/font_size = 14
 
 [node name="Sep1" type="HSeparator" parent="CC/PC/MC/VBox"]
 layout_mode = 2

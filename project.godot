@@ -13,12 +13,13 @@ config_version=5
 config/name="Capibraba"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
-run/main_scene="res://scenes/ui/lobby.tscn"
-config/run/main_scene="res://scenes/ui/lobby.tscn"
+run/main_scene="res://scenes/ui/main_menu.tscn"
+config/run/main_scene="res://scenes/ui/main_menu.tscn"
 
 [autoload]
 
 NetworkManager="*res://scripts/network/network_manager.gd"
+GameSettings="*res://scripts/game/game_settings.gd"
 
 [input]
 
