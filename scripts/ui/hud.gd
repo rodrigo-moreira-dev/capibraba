@@ -53,7 +53,7 @@ func show_winner(winner_id: int) -> void:
 		winner_name = NetworkManager.players.get(winner_id, {}).get("name", "?")
 
 	var panel := PanelContainer.new()
-	var vp_size := get_viewport().size
+	var vp_size: Vector2i = get_viewport().size
 	panel.position = (Vector2(vp_size) - Vector2(360, 140)) * 0.5
 	panel.custom_minimum_size = Vector2(360, 140)
 	add_child(panel)
