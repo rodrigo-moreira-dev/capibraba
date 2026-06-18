@@ -183,9 +183,9 @@ func _input_dir_world() -> Vector3:
 	var raw := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	if raw.length_squared() < 0.01:
 		return Vector3.ZERO
-	var basis   := camera_rig.global_transform.basis
-	var forward := Vector3(-basis.z.x, 0.0, -basis.z.z).normalized()
-	var right   := Vector3( basis.x.x, 0.0,  basis.x.z).normalized()
+	var cam_basis := camera_rig.global_transform.basis
+	var forward   := Vector3(-cam_basis.z.x, 0.0, -cam_basis.z.z).normalized()
+	var right     := Vector3( cam_basis.x.x, 0.0,  cam_basis.x.z).normalized()
 	return (forward * -raw.y + right * raw.x).normalized() * raw.length()
 
 
@@ -204,10 +204,10 @@ func _shoot() -> void:
 	_shoot_timer = SHOOT_COOLDOWN
 	var dir: Vector3 = -aim_camera.global_basis.z
 	var proj: Area3D = PROJECTILE_SCENE.instantiate()
-	proj.direction       = dir
-	proj.global_position = global_position + Vector3(0.0, 0.5, 0.0) + dir * 1.3
+	proj.direction = dir
 	proj.exploded.connect(_on_explosion)
 	get_tree().current_scene.add_child(proj)
+	proj.global_position = global_position + Vector3(0.0, 0.5, 0.0) + dir * 1.3
 
 
 func _on_explosion(pos: Vector3) -> void:

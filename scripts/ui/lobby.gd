@@ -9,6 +9,12 @@ const PALETTE := [
 	Color(0.50, 0.25, 0.78),
 ]
 
+const ARENA_SCENES := {
+	"lava_flat":      "res://scenes/levels/lava_flat.tscn",
+	"lava_islands":   "res://scenes/levels/lava_islands.tscn",
+	"lava_shrinking": "res://scenes/levels/lava_shrinking.tscn",
+}
+
 const MODE_NAMES := {
 	"last_standing": "Last Capivara Standing",
 	"capivara_bomb": "Capivara Bomb",
@@ -156,11 +162,6 @@ func _apply_swatch(btn: Button, idx: int, selected: bool) -> void:
 
 @rpc("authority", "call_local", "reliable")
 func _start_game() -> void:
-	const ARENA_SCENES := {
-		"lava_flat":      "res://scenes/levels/lava_flat.tscn",
-		"lava_islands":   "res://scenes/levels/lava_islands.tscn",
-		"lava_shrinking": "res://scenes/levels/lava_shrinking.tscn",
-	}
 	var scene: String = ARENA_SCENES.get(
 		GameSettings.selected_arena,
 		"res://scenes/levels/test_arena.tscn"
