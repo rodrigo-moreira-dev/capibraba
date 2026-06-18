@@ -85,7 +85,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("jump"):
 		_jump_buffer_timer = jump_buffer_time
-	if event.is_action_just_pressed("shoot") and _shoot_timer <= 0.0:
+	if event.is_action_pressed("shoot") and _shoot_timer <= 0.0:
 		_shoot()
 
 
