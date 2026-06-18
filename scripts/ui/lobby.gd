@@ -40,7 +40,7 @@ var _color_btns: Array = []
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
-	var mode_str := MODE_NAMES.get(GameSettings.selected_mode, "—")
+	var mode_str: String = MODE_NAMES.get(GameSettings.selected_mode, "—")
 	if GameSettings.selected_mode == "last_standing":
 		mode_str += " · " + ARENA_NAMES.get(GameSettings.selected_arena, "")
 	mode_label.text = "Modo: " + mode_str

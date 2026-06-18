@@ -39,8 +39,7 @@ func update_lives(lives: Dictionary) -> void:
 		var data: Dictionary = NetworkManager.players[id]
 		var lbl := Label.new()
 		var remaining: int = lives.get(id, 0)
-		var hearts := "♥ ".repeat(remaining).strip_edges() \
-			+ " ♡".repeat(MAX_LIVES - remaining)
+		var hearts: String = "♥ ".repeat(remaining).strip_edges() + " ♡".repeat(MAX_LIVES - remaining)
 		lbl.text = "• " + data.get("name", "Capivara") + "  " + hearts
 		lbl.add_theme_font_size_override("font_size", 14)
 		player_list.add_child(lbl)
