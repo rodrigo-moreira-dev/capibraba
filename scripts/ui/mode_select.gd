@@ -91,4 +91,8 @@ func _style_back(btn: Button) -> void:
 
 func _select(mode_id: String) -> void:
 	GameSettings.selected_mode = mode_id
-	get_tree().change_scene_to_file("res://scenes/ui/lobby.tscn")
+	# Last Standing has an extra arena selection step
+	if mode_id == "last_standing":
+		get_tree().change_scene_to_file("res://scenes/ui/arena_select.tscn")
+	else:
+		get_tree().change_scene_to_file("res://scenes/ui/lobby.tscn")

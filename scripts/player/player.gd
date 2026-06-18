@@ -1,15 +1,23 @@
 extends CharacterBody3D
 
 const PALETTE := [
-	Color(0.72, 0.56, 0.28),  # marrom natural
-	Color(0.40, 0.24, 0.12),  # marrom escuro
-	Color(0.75, 0.30, 0.15),  # vermelho
-	Color(0.60, 0.60, 0.60),  # cinza
-	Color(0.90, 0.55, 0.08),  # laranja
-	Color(0.50, 0.25, 0.78),  # roxo
+	Color(0.72, 0.56, 0.28),
+	Color(0.40, 0.24, 0.12),
+	Color(0.75, 0.30, 0.15),
+	Color(0.60, 0.60, 0.60),
+	Color(0.90, 0.55, 0.08),
+	Color(0.50, 0.25, 0.78),
 ]
-const KILL_PLANE_Y  := -15.0
-const RESPAWN_POINT := Vector3(0.0, 2.0, 0.0)
+
+const KILL_PLANE_Y     := -20.0
+const RESPAWN_POINT    := Vector3(0.0, 4.0, 0.0)
+const PROJECTILE_SCENE := preload("res://scenes/player/projectile.tscn")
+const EXPLOSION_RADIUS := 4.5
+const EXPLOSION_FORCE  := 26.0
+const LAVA_BOUNCE_FORCE := 28.0
+const BOUNCE_COOLDOWN  := 0.30
+const LIFE_COOLDOWN    := 2.00
+const SHOOT_COOLDOWN   := 0.55
 
 # ── Movement ──────────────────────────────────────────────────────────────────
 @export_group("Movement")
@@ -40,22 +48,27 @@ const RESPAWN_POINT := Vector3(0.0, 2.0, 0.0)
 
 const MAX_JUMPS := 2
 
-var _jump_count        := 0
-var _coyote_timer      := 0.0
-var _jump_buffer_timer := 0.0
-var _was_on_floor      := false
-var _is_dashing        := false
-var _dash_timer        := 0.0
+var _jump_count          := 0
+var _coyote_timer        := 0.0
+var _jump_buffer_timer   := 0.0
+var _was_on_floor        := false
+var _is_dashing          := false
+var _dash_timer          := 0.0
 var _dash_cooldown_timer := 0.0
-var _dash_dir          := Vector3.ZERO
+var _dash_dir            := Vector3.ZERO
+var _shoot_timer         := 0.0
+var _bounce_timer        := 0.0
+var _life_timer          := 0.0
 
-@onready var camera_rig: Node3D          = $CameraRig
-@onready var mesh_pivot: Node3D          = $MeshPivot
-@onready var body_mesh:  MeshInstance3D  = $MeshPivot/BodyMesh
-@onready var name_label: Label3D         = $NameLabel
+@onready var camera_rig: Node3D         = $CameraRig
+@onready var mesh_pivot: Node3D         = $MeshPivot
+@onready var body_mesh:  MeshInstance3D = $MeshPivot/BodyMesh
+@onready var name_label: Label3D        = $NameLabel
+@onready var aim_camera: Camera3D       = $CameraRig/SpringArm3D/Camera3D
 
 
 func _ready() -> void:
+	add_to_group("player")
 	var id   := get_multiplayer_authority()
 	var data := NetworkManager.players.get(id, {}) as Dictionary
 	name_label.text    = data.get("name", "Capivara")
@@ -72,6 +85,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("jump"):
 		_jump_buffer_timer = jump_buffer_time
+	if event.is_action_just_pressed("shoot") and _shoot_timer <= 0.0:
+		_shoot()
 
 
 func _physics_process(delta: float) -> void:
@@ -91,9 +106,12 @@ func _physics_process(delta: float) -> void:
 func _tick_timers(delta: float) -> void:
 	if _was_on_floor and not is_on_floor():
 		_coyote_timer = coyote_time
-	_coyote_timer        = maxf(_coyote_timer - delta, 0.0)
-	_jump_buffer_timer   = maxf(_jump_buffer_timer - delta, 0.0)
+	_coyote_timer        = maxf(_coyote_timer        - delta, 0.0)
+	_jump_buffer_timer   = maxf(_jump_buffer_timer   - delta, 0.0)
 	_dash_cooldown_timer = maxf(_dash_cooldown_timer - delta, 0.0)
+	_shoot_timer         = maxf(_shoot_timer         - delta, 0.0)
+	_bounce_timer        = maxf(_bounce_timer         - delta, 0.0)
+	_life_timer          = maxf(_life_timer           - delta, 0.0)
 
 
 func _apply_gravity(delta: float) -> void:
@@ -108,7 +126,7 @@ func _apply_gravity(delta: float) -> void:
 
 
 func _apply_movement(delta: float) -> void:
-	var dir  := _input_dir_world()
+	var dir   := _input_dir_world()
 	var accel := acceleration if is_on_floor() else air_acceleration
 	velocity.x = move_toward(velocity.x, dir.x * speed, accel * delta)
 	velocity.z = move_toward(velocity.z, dir.z * speed, accel * delta)
@@ -178,3 +196,58 @@ func _post_move() -> void:
 	if global_position.y < KILL_PLANE_Y:
 		global_position = RESPAWN_POINT
 		velocity        = Vector3.ZERO
+
+
+# ── Shooting ──────────────────────────────────────────────────────────────────
+
+func _shoot() -> void:
+	_shoot_timer = SHOOT_COOLDOWN
+	var dir: Vector3 = -aim_camera.global_basis.z
+	var proj: Area3D = PROJECTILE_SCENE.instantiate()
+	proj.direction       = dir
+	proj.global_position = global_position + Vector3(0.0, 0.5, 0.0) + dir * 1.3
+	proj.exploded.connect(_on_explosion)
+	get_tree().current_scene.add_child(proj)
+
+
+func _on_explosion(pos: Vector3) -> void:
+	_broadcast_explosion.rpc(pos)
+
+
+@rpc("any_peer", "call_local", "unreliable_ordered")
+func _broadcast_explosion(pos: Vector3) -> void:
+	for p: CharacterBody3D in get_tree().get_nodes_in_group("player"):
+		if not p.is_multiplayer_authority():
+			continue
+		var dist: float = p.global_position.distance_to(pos)
+		if dist > EXPLOSION_RADIUS:
+			continue
+		var push: Vector3 = (p.global_position - pos).normalized()
+		push.y = maxf(push.y, 0.35)
+		p.velocity += push * EXPLOSION_FORCE * (1.0 - dist / EXPLOSION_RADIUS)
+
+
+# ── Lava bounce ───────────────────────────────────────────────────────────────
+
+func on_lava_contact() -> void:
+	if _bounce_timer > 0.0:
+		return
+	velocity.x    *= 0.15
+	velocity.z    *= 0.15
+	velocity.y     = LAVA_BOUNCE_FORCE
+	_bounce_timer  = BOUNCE_COOLDOWN
+	if _life_timer > 0.0:
+		return
+	_life_timer = LIFE_COOLDOWN
+	_notify_lava()
+
+
+func _notify_lava() -> void:
+	var managers: Array = get_tree().get_nodes_in_group("last_standing_manager")
+	if managers.is_empty():
+		return
+	var m: Node = managers[0]
+	if not multiplayer.has_multiplayer_peer() or multiplayer.is_server():
+		m.on_player_lava_touch(get_multiplayer_authority())
+	else:
+		m.client_report_lava.rpc_id(1, get_multiplayer_authority())

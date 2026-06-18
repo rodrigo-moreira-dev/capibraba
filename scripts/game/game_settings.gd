@@ -1,8 +1,9 @@
 extends Node
 
-var master_volume := 1.0
-var fullscreen    := false
-var selected_mode := "last_standing"
+var master_volume  := 1.0
+var fullscreen     := false
+var selected_mode  := "last_standing"
+var selected_arena := "lava_flat"
 
 const SAVE_PATH := "user://settings.cfg"
 

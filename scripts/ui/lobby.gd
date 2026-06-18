@@ -17,6 +17,12 @@ const MODE_NAMES := {
 	"food_theft":    "Roubo de Comida",
 }
 
+const ARENA_NAMES := {
+	"lava_flat":      "Plataforma Central",
+	"lava_islands":   "Ilhas de Lava",
+	"lava_shrinking": "Plataforma Maldita",
+}
+
 @onready var back_btn:    Button        = $CC/PC/MC/VBox/BackBtn
 @onready var mode_label:  Label         = $CC/PC/MC/VBox/ModeLabel
 @onready var name_input:  LineEdit      = $CC/PC/MC/VBox/NameInput
@@ -33,11 +39,18 @@ var _color_btns: Array = []
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	mode_label.text = "Modo: " + MODE_NAMES.get(GameSettings.selected_mode, "—")
+
+	var mode_str := MODE_NAMES.get(GameSettings.selected_mode, "—")
+	if GameSettings.selected_mode == "last_standing":
+		mode_str += " · " + ARENA_NAMES.get(GameSettings.selected_arena, "")
+	mode_label.text = "Modo: " + mode_str
 
 	back_btn.pressed.connect(func() -> void:
 		NetworkManager.disconnect_game()
-		get_tree().change_scene_to_file("res://scenes/ui/mode_select.tscn")
+		var back_scene := "res://scenes/ui/arena_select.tscn" \
+			if GameSettings.selected_mode == "last_standing" \
+			else "res://scenes/ui/mode_select.tscn"
+		get_tree().change_scene_to_file(back_scene)
 	)
 
 	_build_color_row()
@@ -143,4 +156,13 @@ func _apply_swatch(btn: Button, idx: int, selected: bool) -> void:
 
 @rpc("authority", "call_local", "reliable")
 func _start_game() -> void:
-	get_tree().change_scene_to_file("res://scenes/levels/test_arena.tscn")
+	const ARENA_SCENES := {
+		"lava_flat":      "res://scenes/levels/lava_flat.tscn",
+		"lava_islands":   "res://scenes/levels/lava_islands.tscn",
+		"lava_shrinking": "res://scenes/levels/lava_shrinking.tscn",
+	}
+	var scene: String = ARENA_SCENES.get(
+		GameSettings.selected_arena,
+		"res://scenes/levels/test_arena.tscn"
+	)
+	get_tree().change_scene_to_file(scene)

@@ -1,0 +1,147 @@
+[gd_scene load_steps=15 format=3]
+
+[ext_resource type="Script"      path="res://scripts/game/last_standing_manager.gd" id="1_lsm"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn"                    id="2_hud"]
+[ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn"             id="3_pm"]
+
+[sub_resource type="ProceduralSkyMaterial" id="SkyMat_li"]
+sky_top_color        = Color(0.28, 0.10, 0.04, 1)
+sky_horizon_color    = Color(0.75, 0.35, 0.08, 1)
+ground_horizon_color = Color(0.75, 0.35, 0.08, 1)
+ground_bottom_color  = Color(0.38, 0.14, 0.04, 1)
+
+[sub_resource type="Sky" id="Sky_li"]
+sky_material = SubResource("SkyMat_li")
+
+[sub_resource type="Environment" id="Env_li"]
+background_mode      = 2
+sky                  = SubResource("Sky_li")
+ambient_light_source = 3
+ambient_light_energy = 0.55
+
+[sub_resource type="BoxMesh" id="BoxMesh_center_li"]
+size = Vector3(8, 2, 8)
+
+[sub_resource type="BoxShape3D" id="BoxShape_center_li"]
+size = Vector3(8, 2, 8)
+
+[sub_resource type="BoxMesh" id="BoxMesh_outer_li"]
+size = Vector3(5, 2, 5)
+
+[sub_resource type="BoxShape3D" id="BoxShape_outer_li"]
+size = Vector3(5, 2, 5)
+
+[sub_resource type="StandardMaterial3D" id="Mat_plat_li"]
+albedo_color = Color(0.25, 0.20, 0.18, 1)
+roughness    = 0.90
+
+[sub_resource type="BoxMesh" id="BoxMesh_lava_li"]
+size = Vector3(100, 0.5, 100)
+
+[sub_resource type="StandardMaterial3D" id="Mat_lava_li"]
+albedo_color               = Color(0.95, 0.38, 0.02, 1)
+emission_enabled           = true
+emission                   = Color(1.0, 0.30, 0.0, 1)
+emission_energy_multiplier = 1.8
+roughness                  = 0.90
+
+[sub_resource type="BoxShape3D" id="BoxShape_lava_area_li"]
+size = Vector3(200, 2, 200)
+
+[node name="LavaIslands" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Env_li")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation       = Vector3(-0.872665, 0.523599, 0)
+light_color    = Color(1.0, 0.62, 0.32, 1)
+light_energy   = 1.0
+shadow_enabled = true
+
+[node name="LavaMesh" type="MeshInstance3D" parent="."]
+position = Vector3(0, -0.25, 0)
+mesh     = SubResource("BoxMesh_lava_li")
+surface_material_override/0 = SubResource("Mat_lava_li")
+
+[node name="LavaArea" type="Area3D" parent="."]
+position = Vector3(0, -1, 0)
+
+[node name="LavaShape" type="CollisionShape3D" parent="LavaArea"]
+shape = SubResource("BoxShape_lava_area_li")
+
+[node name="CenterIsland" type="StaticBody3D" parent="."]
+position = Vector3(0, 1, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="CenterIsland"]
+mesh = SubResource("BoxMesh_center_li")
+surface_material_override/0 = SubResource("Mat_plat_li")
+
+[node name="Collision" type="CollisionShape3D" parent="CenterIsland"]
+shape = SubResource("BoxShape_center_li")
+
+[node name="NorthIsland" type="StaticBody3D" parent="."]
+position = Vector3(0, 1, -14)
+
+[node name="Mesh" type="MeshInstance3D" parent="NorthIsland"]
+mesh = SubResource("BoxMesh_outer_li")
+surface_material_override/0 = SubResource("Mat_plat_li")
+
+[node name="Collision" type="CollisionShape3D" parent="NorthIsland"]
+shape = SubResource("BoxShape_outer_li")
+
+[node name="SouthIsland" type="StaticBody3D" parent="."]
+position = Vector3(0, 1, 14)
+
+[node name="Mesh" type="MeshInstance3D" parent="SouthIsland"]
+mesh = SubResource("BoxMesh_outer_li")
+surface_material_override/0 = SubResource("Mat_plat_li")
+
+[node name="Collision" type="CollisionShape3D" parent="SouthIsland"]
+shape = SubResource("BoxShape_outer_li")
+
+[node name="EastIsland" type="StaticBody3D" parent="."]
+position = Vector3(14, 1, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="EastIsland"]
+mesh = SubResource("BoxMesh_outer_li")
+surface_material_override/0 = SubResource("Mat_plat_li")
+
+[node name="Collision" type="CollisionShape3D" parent="EastIsland"]
+shape = SubResource("BoxShape_outer_li")
+
+[node name="WestIsland" type="StaticBody3D" parent="."]
+position = Vector3(-14, 1, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="WestIsland"]
+mesh = SubResource("BoxMesh_outer_li")
+surface_material_override/0 = SubResource("Mat_plat_li")
+
+[node name="Collision" type="CollisionShape3D" parent="WestIsland"]
+shape = SubResource("BoxShape_outer_li")
+
+[node name="SpawnPoints" type="Node3D" parent="."]
+
+[node name="Spawn1" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(0, 3, -14)
+
+[node name="Spawn2" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(0, 3, 14)
+
+[node name="Spawn3" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(14, 3, 0)
+
+[node name="Spawn4" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(-14, 3, 0)
+
+[node name="Players" type="Node3D" parent="."]
+
+[node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="."]
+spawn_path = NodePath("../Players")
+
+[node name="GameManager" type="Node" parent="."]
+script = ExtResource("1_lsm")
+
+[node name="HUD" parent="." instance=ExtResource("2_hud")]
+
+[node name="PauseMenu" parent="." instance=ExtResource("3_pm")]
