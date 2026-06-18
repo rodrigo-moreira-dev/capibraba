@@ -3,9 +3,12 @@ extends Node
 const PLAYER_SCENE := preload("res://scenes/player/player.tscn")
 const MAX_LIVES    := 3
 
-var _lives: Dictionary = {}
+var _lives:                Dictionary = {}
+var _deaths:               Dictionary = {}
+var _kills:                Dictionary = {}
+var _initial_player_count: int        = 1
 
-@onready var _players_node: Node3D           = $"../Players"
+@onready var _players_node: Node3D             = $"../Players"
 @onready var _spawner:      MultiplayerSpawner = $"../MultiplayerSpawner"
 
 
@@ -13,7 +16,6 @@ func _ready() -> void:
 	add_to_group("last_standing_manager")
 	_spawner.add_spawnable_scene("res://scenes/player/player.tscn")
 
-	# Connect lava area
 	var lava_area: Area3D = get_node_or_null("../LavaArea")
 	if lava_area:
 		lava_area.body_entered.connect(_on_lava_body_entered)
@@ -24,15 +26,24 @@ func _ready() -> void:
 		return
 
 	if NetworkManager.players.is_empty():
-		_lives[1] = MAX_LIVES
+		_initial_player_count = 1
+		_init_player(1)
 		_spawn_player(1)
 		return
 
+	_initial_player_count = NetworkManager.players.size()
 	for id: int in NetworkManager.players:
-		_lives[id] = MAX_LIVES
+		_init_player(id)
 		_spawn_player(id)
 
 	_sync_lives.rpc(_lives)
+	_sync_stats.rpc(_deaths, _kills)
+
+
+func _init_player(id: int) -> void:
+	_lives[id]  = MAX_LIVES
+	_deaths[id] = 0
+	_kills[id]  = 0
 
 
 func _on_players_updated() -> void:
@@ -41,7 +52,7 @@ func _on_players_updated() -> void:
 	for id: int in NetworkManager.players:
 		if not _players_node.has_node(str(id)):
 			if not _lives.has(id):
-				_lives[id] = MAX_LIVES
+				_init_player(id)
 			_spawn_player(id)
 	for child in _players_node.get_children():
 		if not NetworkManager.players.has(int(child.name)):
@@ -72,20 +83,27 @@ func _on_lava_body_entered(body: Node3D) -> void:
 
 
 @rpc("any_peer", "call_remote", "reliable")
-func client_report_lava(player_id: int) -> void:
-	on_player_lava_touch(player_id)
+func client_report_lava(player_id: int, attacker_id: int) -> void:
+	on_player_lava_touch(player_id, attacker_id)
 
 
-func on_player_lava_touch(player_id: int) -> void:
+func on_player_lava_touch(player_id: int, attacker_id: int = -1) -> void:
 	if not multiplayer.is_server():
 		return
 	if not _lives.has(player_id):
 		return
+
+	_deaths[player_id] = _deaths.get(player_id, 0) + 1
 	_lives[player_id] -= 1
+
 	if _lives[player_id] <= 0:
 		_lives.erase(player_id)
+		if attacker_id != -1 and attacker_id != player_id and _kills.has(attacker_id):
+			_kills[attacker_id] += 1
 		_eliminate.rpc(player_id)
+
 	_sync_lives.rpc(_lives)
+	_sync_stats.rpc(_deaths, _kills)
 	_check_win()
 
 
@@ -100,6 +118,15 @@ func _sync_lives(data: Dictionary) -> void:
 
 
 @rpc("authority", "call_local", "reliable")
+func _sync_stats(deaths: Dictionary, kills: Dictionary) -> void:
+	_deaths = deaths
+	_kills  = kills
+	var hud := get_tree().get_first_node_in_group("hud")
+	if hud and hud.has_method("update_scoreboard"):
+		hud.update_scoreboard(_deaths, _kills)
+
+
+@rpc("authority", "call_local", "reliable")
 func _eliminate(player_id: int) -> void:
 	for p: Node in _players_node.get_children():
 		if p.get_multiplayer_authority() == player_id:
@@ -111,8 +138,10 @@ func _check_win() -> void:
 	if not multiplayer.is_server():
 		return
 	match _lives.size():
-		1: _announce_winner.rpc(_lives.keys()[0])
 		0: _announce_winner.rpc(-1)
+		1:
+			if _initial_player_count > 1:
+				_announce_winner.rpc(_lives.keys()[0])
 
 
 @rpc("authority", "call_local", "reliable")

@@ -59,6 +59,7 @@ var _dash_dir            := Vector3.ZERO
 var _shoot_timer         := 0.0
 var _bounce_timer        := 0.0
 var _life_timer          := 0.0
+var last_attacker_id: int = -1
 
 @onready var camera_rig: Node3D         = $CameraRig
 @onready var mesh_pivot: Node3D         = $MeshPivot
@@ -211,11 +212,11 @@ func _shoot() -> void:
 
 
 func _on_explosion(pos: Vector3) -> void:
-	_broadcast_explosion.rpc(pos)
+	_broadcast_explosion.rpc(pos, get_multiplayer_authority())
 
 
 @rpc("any_peer", "call_local", "unreliable_ordered")
-func _broadcast_explosion(pos: Vector3) -> void:
+func _broadcast_explosion(pos: Vector3, attacker_id: int) -> void:
 	for p: CharacterBody3D in get_tree().get_nodes_in_group("player"):
 		if not p.is_multiplayer_authority():
 			continue
@@ -225,6 +226,7 @@ func _broadcast_explosion(pos: Vector3) -> void:
 		var push: Vector3 = (p.global_position - pos).normalized()
 		push.y = maxf(push.y, 0.35)
 		p.velocity += push * EXPLOSION_FORCE * (1.0 - dist / EXPLOSION_RADIUS)
+		p.last_attacker_id = attacker_id
 
 
 # ── Lava bounce ───────────────────────────────────────────────────────────────
@@ -248,6 +250,6 @@ func _notify_lava() -> void:
 		return
 	var m: Node = managers[0]
 	if not multiplayer.has_multiplayer_peer() or multiplayer.is_server():
-		m.on_player_lava_touch(get_multiplayer_authority())
+		m.on_player_lava_touch(get_multiplayer_authority(), last_attacker_id)
 	else:
-		m.client_report_lava.rpc_id(1, get_multiplayer_authority())
+		m.client_report_lava.rpc_id(1, get_multiplayer_authority(), last_attacker_id)
