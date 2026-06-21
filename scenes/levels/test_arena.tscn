@@ -1,8 +1,9 @@
-[gd_scene load_steps=19 format=3]
+[gd_scene load_steps=20 format=3]
 
 [ext_resource type="Script"      path="res://scripts/game/game_manager.gd"  id="1_gm"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn"            id="2_hud"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn"     id="3_pm"]
+[ext_resource type="Script" path="res://scripts/game/powerup_manager.gd" id="4_pum"]
 
 [sub_resource type="ProceduralSkyMaterial" id="SkyMat_1"]
 sky_top_color     = Color(0.15, 0.35, 0.85, 1)
@@ -116,6 +117,9 @@ spawn_path = NodePath("../Players")
 
 [node name="GameManager" type="Node" parent="."]
 script = ExtResource("1_gm")
+
+[node name="PowerupManager" type="Node" parent="."]
+script = ExtResource("4_pum")
 
 [node name="HUD" parent="." instance=ExtResource("2_hud")]
 

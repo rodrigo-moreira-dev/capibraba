@@ -41,6 +41,8 @@ const ARENA_NAMES := {
 @onready var start_btn:   Button        = $CC/PC/MC/VBox/StartBtn
 
 var _color_btns: Array = []
+var _preset_dropdown: OptionButton
+var _preset_desc: Label
 
 
 func _ready() -> void:
@@ -60,6 +62,7 @@ func _ready() -> void:
 	)
 
 	_build_color_row()
+	_build_preset_row()
 	NetworkManager.players_updated.connect(_refresh)
 	NetworkManager.connection_failed.connect(func(): _set_status("Falha na conexão.", true))
 	NetworkManager.server_disconnected.connect(
@@ -75,13 +78,17 @@ func _ready() -> void:
 
 func _on_host() -> void:
 	_apply_name()
-	NetworkManager.host()
-	_set_status("Hospedando na porta %d." % NetworkManager.DEFAULT_PORT)
-	start_btn.visible = true
+	if not multiplayer.is_server():
+		NetworkManager.host()
+	start_btn.disabled = false
+	_set_status("Você é o host! Clique em 'Iniciar Jogo' para começar ↓")
 	_refresh()
 
 
 func _on_join() -> void:
+	if multiplayer.is_server():
+		_set_status("Você já está hospedando. Clique em 'Iniciar Jogo'.")
+		return
 	_apply_name()
 	var ip := ip_input.text.strip_edges()
 	if ip.is_empty():
@@ -92,7 +99,9 @@ func _on_join() -> void:
 
 
 func _on_start() -> void:
-	_start_game.rpc()
+	# Envia a escolha de preset do HOST para todos os peers, garantindo que
+	# todos apliquem o mesmo estilo de partida.
+	_start_game.rpc(GameSettings.selected_preset)
 
 
 func _refresh() -> void:
@@ -158,10 +167,59 @@ func _apply_swatch(btn: Button, idx: int, selected: bool) -> void:
 	btn.add_theme_stylebox_override("focus",   s)
 
 
+# ── Preset picker (estilo da partida) ──────────────────────────────────────────
+
+func _build_preset_row() -> void:
+	var vbox: VBoxContainer = mode_label.get_parent()
+
+	var row := VBoxContainer.new()
+	row.name = "PresetRow"
+	row.add_theme_constant_override("separation", 4)
+
+	var lbl := Label.new()
+	lbl.text = "Estilo da partida:"
+	row.add_child(lbl)
+
+	_preset_dropdown = OptionButton.new()
+	_preset_dropdown.custom_minimum_size = Vector2(0, 36)
+	var presets: Dictionary = MatchPresets.get_all_presets()
+	var keys := presets.keys()
+	for i in keys.size():
+		var pid: String = keys[i]
+		_preset_dropdown.add_item(MatchPresets.get_preset_name(pid))
+		_preset_dropdown.set_item_metadata(i, pid)
+		if pid == GameSettings.selected_preset:
+			_preset_dropdown.selected = i
+	_preset_dropdown.item_selected.connect(_on_preset_selected)
+	row.add_child(_preset_dropdown)
+
+	_preset_desc = Label.new()
+	_preset_desc.text = MatchPresets.get_preset_description(GameSettings.selected_preset)
+	_preset_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_preset_desc.add_theme_font_size_override("font_size", 12)
+	_preset_desc.modulate = Color(0.8, 0.8, 0.8)
+	_preset_desc.custom_minimum_size = Vector2(360, 0)
+	row.add_child(_preset_desc)
+
+	# Insere logo abaixo do rótulo do modo (topo do painel)
+	vbox.add_child(row)
+	vbox.move_child(row, mode_label.get_index() + 1)
+
+
+func _on_preset_selected(idx: int) -> void:
+	var pid: String = _preset_dropdown.get_item_metadata(idx)
+	GameSettings.selected_preset = pid
+	_preset_desc.text = MatchPresets.get_preset_description(pid)
+
+
 # ── Scene transition ──────────────────────────────────────────────────────────
 
 @rpc("authority", "call_local", "reliable")
-func _start_game() -> void:
+func _start_game(preset_id: String) -> void:
+	# Aplica o preset em TODOS os peers (call_local). MatchSettings não é
+	# sincronizado pela rede, então cada peer aplica o mesmo preset localmente.
+	GameSettings.selected_preset = preset_id
+	MatchPresets.apply_preset(GameSettings.selected_preset)
 	var scene: String = ARENA_SCENES.get(
 		GameSettings.selected_arena,
 		"res://scenes/levels/test_arena.tscn"

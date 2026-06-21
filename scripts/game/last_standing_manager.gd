@@ -1,12 +1,14 @@
 extends Node
 
 const PLAYER_SCENE := preload("res://scenes/player/player.tscn")
-const MAX_LIVES    := 3
 
 var _lives:                Dictionary = {}
 var _deaths:               Dictionary = {}
 var _kills:                Dictionary = {}
+var _kill_streaks:         Dictionary = {}  # Track kill streaks
 var _initial_player_count: int        = 1
+var _round_wins:           Dictionary = {}  # Track round wins
+var _current_round:        int        = 1
 
 @onready var _players_node: Node3D             = $"../Players"
 @onready var _spawner:      MultiplayerSpawner = $"../MultiplayerSpawner"
@@ -41,9 +43,10 @@ func _ready() -> void:
 
 
 func _init_player(id: int) -> void:
-	_lives[id]  = MAX_LIVES
+	_lives[id]  = MatchSettings.lives_per_player
 	_deaths[id] = 0
 	_kills[id]  = 0
+	_kill_streaks[id] = 0
 
 
 func _on_players_updated() -> void:
@@ -95,16 +98,41 @@ func on_player_lava_touch(player_id: int, attacker_id: int = -1) -> void:
 
 	_deaths[player_id] = _deaths.get(player_id, 0) + 1
 	_lives[player_id] -= 1
+	
+	# Reset kill streak do jogador que morreu
+	_kill_streaks[player_id] = 0
 
 	if _lives[player_id] <= 0:
 		_lives.erase(player_id)
 		if attacker_id != -1 and attacker_id != player_id and _kills.has(attacker_id):
 			_kills[attacker_id] += 1
+			# Kill streak
+			_kill_streaks[attacker_id] = _kill_streaks.get(attacker_id, 0) + 1
+			_check_kill_streak(attacker_id)
 		_eliminate.rpc(player_id)
 
 	_sync_lives.rpc(_lives)
 	_sync_stats.rpc(_deaths, _kills)
 	_check_win()
+
+
+func _check_kill_streak(player_id: int) -> void:
+	if not MatchSettings.kill_streak_enabled:
+		return
+	
+	var streak: int = _kill_streaks.get(player_id, 0)
+	if streak >= MatchSettings.kill_streak_bonus:
+		# Bônus: ganha uma vida extra
+		_lives[player_id] = _lives.get(player_id, 0) + 1
+		_kill_streaks[player_id] = 0
+		_announce_kill_streak.rpc(player_id, streak)
+
+
+@rpc("authority", "call_local", "reliable")
+func _announce_kill_streak(player_id: int, streak: int) -> void:
+	var hud := get_tree().get_first_node_in_group("hud")
+	if hud and hud.has_method("show_kill_streak"):
+		hud.show_kill_streak(player_id, streak)
 
 
 # ── Sync ──────────────────────────────────────────────────────────────────────

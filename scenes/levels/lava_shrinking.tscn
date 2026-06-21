@@ -1,9 +1,10 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script"      path="res://scripts/game/last_standing_manager.gd" id="1_lsm"]
 [ext_resource type="Script"      path="res://scripts/game/shrinking_platform.gd"    id="2_sp"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn"                    id="3_hud"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn"             id="4_pm"]
+[ext_resource type="Script" path="res://scripts/game/powerup_manager.gd" id="5_pum"]
 
 [sub_resource type="ProceduralSkyMaterial" id="SkyMat_ls"]
 sky_top_color        = Color(0.28, 0.10, 0.04, 1)
@@ -79,6 +80,9 @@ spawn_path = NodePath("../Players")
 
 [node name="GameManager" type="Node" parent="."]
 script = ExtResource("1_lsm")
+
+[node name="PowerupManager" type="Node" parent="."]
+script = ExtResource("5_pum")
 
 [node name="HUD" parent="." instance=ExtResource("3_hud")]
 

@@ -4,6 +4,7 @@ var master_volume  := 1.0
 var fullscreen     := false
 var selected_mode  := "last_standing"
 var selected_arena := "lava_flat"
+var selected_preset := "classic"  # preset de configurações (selecionável no lobby)
 
 const SAVE_PATH := "user://settings.cfg"
 
@@ -28,6 +29,9 @@ func save() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value("audio",   "master",     master_volume)
 	cfg.set_value("display", "fullscreen", fullscreen)
+	cfg.set_value("game",    "mode",       selected_mode)
+	cfg.set_value("game",    "arena",      selected_arena)
+	cfg.set_value("game",    "preset",     selected_preset)
 	cfg.save(SAVE_PATH)
 
 
@@ -35,8 +39,14 @@ func _load() -> void:
 	var cfg := ConfigFile.new()
 	if cfg.load(SAVE_PATH) != OK:
 		return
-	master_volume = cfg.get_value("audio",   "master",     1.0)
-	fullscreen    = cfg.get_value("display", "fullscreen", false)
+	master_volume  = cfg.get_value("audio",   "master",     1.0)
+	fullscreen     = cfg.get_value("display", "fullscreen", false)
+	selected_mode  = cfg.get_value("game",    "mode",       "last_standing")
+	selected_arena = cfg.get_value("game",    "arena",      "lava_flat")
+	selected_preset = cfg.get_value("game",   "preset",     "classic")
+	
+	# Carregar MatchSettings
+	MatchSettings.load()
 
 
 func _apply() -> void:
