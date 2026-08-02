@@ -1,0 +1,12 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/player/teleport_orb_2d.gd" id="1_to"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_to"]
+radius = 0.32
+
+[node name="TeleportOrb2D" type="Area2D"]
+script = ExtResource("1_to")
+
+[node name="Collision" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_to")

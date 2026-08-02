@@ -2,6 +2,9 @@ extends CanvasLayer
 
 const MODE_NAMES := {
 	"last_standing": "Last Capivara Standing",
+	"hellball":      "Hellball",
+	"hellball_platform": "Hellball Plataforma",
+	"hellball_topdown":  "Hellball Topdown",
 	"capivara_bomb": "Capivara Bomb",
 	"king_of_hill":  "King of the Hill",
 	"race":          "Corrida de Obstáculos",
@@ -17,6 +20,9 @@ var _last_deaths: Dictionary = {}
 var _last_kills:  Dictionary = {}
 var _event_panel: PanelContainer
 var _kill_streak_panel: PanelContainer
+var _announce_panel: PanelContainer
+var _announce_lbl: Label
+var _hint_lbl: Label
 
 
 func _ready() -> void:
@@ -200,3 +206,76 @@ func show_winner(winner_id: int) -> void:
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sub.add_theme_font_size_override("font_size", 18)
 	vbox.add_child(sub)
+
+
+# ── Anúncio de evento (topo central) ─────────────────────────────────────────
+
+func show_event_announcement(message: String, duration: float) -> void:
+	if not is_instance_valid(_announce_panel):
+		_build_announce_panel()
+	_announce_lbl.text = message
+	_announce_panel.visible = true
+	_announce_panel.modulate.a = 1.0
+	var tween := create_tween()
+	tween.tween_interval(duration)
+	tween.tween_property(_announce_panel, "modulate:a", 0.0, 0.5)
+	tween.tween_callback(func() -> void: _announce_panel.visible = false)
+
+
+func _build_announce_panel() -> void:
+	var overlay := Control.new()
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(overlay)
+
+	var cc := CenterContainer.new()
+	cc.set_anchors_preset(Control.PRESET_FULL_RECT)
+	cc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# Faixa horizontal próxima ao topo da tela
+	cc.offset_top    = 60.0
+	cc.offset_bottom = 210.0
+	overlay.add_child(cc)
+
+	_announce_panel = PanelContainer.new()
+	_announce_panel.visible = false
+	_announce_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cc.add_child(_announce_panel)
+
+	var bg := StyleBoxFlat.new()
+	bg.bg_color = Color(0.10, 0.06, 0.04, 0.85)
+	bg.set_corner_radius_all(10)
+	bg.content_margin_left   = 26
+	bg.content_margin_right  = 26
+	bg.content_margin_top    = 12
+	bg.content_margin_bottom = 12
+	_announce_panel.add_theme_stylebox_override("panel", bg)
+
+	var mc := MarginContainer.new()
+	_announce_panel.add_child(mc)
+
+	_announce_lbl = Label.new()
+	_announce_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_announce_lbl.add_theme_font_size_override("font_size", 18)
+	_announce_lbl.modulate = Color(1.0, 0.80, 0.35)
+	mc.add_child(_announce_lbl)
+
+
+# ── Dica de modo (rodapé) ────────────────────────────────────────────────────
+
+func show_mode_hint(text: String) -> void:
+	if not is_instance_valid(_hint_lbl):
+		_hint_lbl = Label.new()
+		_hint_lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
+		_hint_lbl.offset_left   = 24.0
+		_hint_lbl.offset_right  = -24.0
+		_hint_lbl.offset_top    = -60.0
+		_hint_lbl.offset_bottom = -18.0
+		_hint_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_hint_lbl.vertical_alignment   = VERTICAL_ALIGNMENT_BOTTOM
+		_hint_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_hint_lbl.add_theme_font_size_override("font_size", 14)
+		_hint_lbl.add_theme_color_override("font_color", Color(0.92, 0.92, 0.92, 0.85))
+		_hint_lbl.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.6))
+		_hint_lbl.add_theme_constant_override("outline_size", 6)
+		add_child(_hint_lbl)
+	_hint_lbl.text = text

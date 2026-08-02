@@ -17,6 +17,9 @@ const ARENA_SCENES := {
 
 const MODE_NAMES := {
 	"last_standing": "Last Capivara Standing",
+	"hellball":      "Hellball",
+	"hellball_platform": "Hellball Plataforma",
+	"hellball_topdown":  "Hellball Topdown",
 	"capivara_bomb": "Capivara Bomb",
 	"king_of_hill":  "King of the Hill",
 	"race":          "Corrida de Obstáculos",
@@ -220,8 +223,17 @@ func _start_game(preset_id: String) -> void:
 	# sincronizado pela rede, então cada peer aplica o mesmo preset localmente.
 	GameSettings.selected_preset = preset_id
 	MatchPresets.apply_preset(GameSettings.selected_preset)
-	var scene: String = ARENA_SCENES.get(
-		GameSettings.selected_arena,
-		"res://scenes/levels/test_arena.tscn"
-	)
+	var scene: String
+	match GameSettings.selected_mode:
+		"hellball":
+			scene = "res://scenes/levels/hellball_arena.tscn"
+		"hellball_platform":
+			scene = "res://scenes/levels/hellball_platform.tscn"
+		"hellball_topdown":
+			scene = "res://scenes/levels/hellball_topdown.tscn"
+		_:
+			scene = ARENA_SCENES.get(
+				GameSettings.selected_arena,
+				"res://scenes/levels/test_arena.tscn"
+			)
 	get_tree().change_scene_to_file(scene)

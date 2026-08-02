@@ -1,0 +1,166 @@
+[gd_scene load_steps=20 format=3]
+
+[ext_resource type="Script"      path="res://scripts/game/hellball_manager.gd" id="1_hb"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn"                 id="2_hud"]
+[ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn"          id="3_pm"]
+
+[sub_resource type="ProceduralSkyMaterial" id="SkyMat_hb"]
+sky_top_color        = Color(0.24, 0.08, 0.03, 1)
+sky_horizon_color    = Color(0.82, 0.40, 0.08, 1)
+ground_horizon_color = Color(0.82, 0.40, 0.08, 1)
+ground_bottom_color  = Color(0.35, 0.12, 0.04, 1)
+
+[sub_resource type="Sky" id="Sky_hb"]
+sky_material = SubResource("SkyMat_hb")
+
+[sub_resource type="Environment" id="Env_hb"]
+background_mode      = 2
+sky                  = SubResource("Sky_hb")
+ambient_light_source = 3
+ambient_light_energy = 0.6
+
+[sub_resource type="BoxMesh" id="BoxMesh_plat_hb"]
+size = Vector3(24, 2, 24)
+
+[sub_resource type="BoxShape3D" id="BoxShape_plat_hb"]
+size = Vector3(24, 2, 24)
+
+[sub_resource type="StandardMaterial3D" id="Mat_plat_hb"]
+albedo_color = Color(0.22, 0.18, 0.16, 1)
+roughness    = 0.90
+
+[sub_resource type="BoxMesh" id="BoxMesh_pillar_hb"]
+size = Vector3(2.4, 5, 2.4)
+
+[sub_resource type="BoxShape3D" id="BoxShape_pillar_hb"]
+size = Vector3(2.4, 5, 2.4)
+
+[sub_resource type="StandardMaterial3D" id="Mat_pillar_hb"]
+albedo_color = Color(0.32, 0.24, 0.20, 1)
+roughness    = 0.85
+
+[sub_resource type="BoxMesh" id="BoxMesh_ring_hb"]
+size = Vector3(5, 0.08, 5)
+
+[sub_resource type="StandardMaterial3D" id="Mat_ring_hb"]
+albedo_color               = Color(1.0, 0.45, 0.05, 1)
+emission_enabled           = true
+emission                   = Color(1.0, 0.35, 0.0, 1)
+emission_energy_multiplier = 1.6
+roughness                  = 0.90
+
+[sub_resource type="BoxMesh" id="BoxMesh_lava_hb"]
+size = Vector3(100, 0.5, 100)
+
+[sub_resource type="StandardMaterial3D" id="Mat_lava_hb"]
+albedo_color               = Color(0.95, 0.38, 0.02, 1)
+emission_enabled           = true
+emission                   = Color(1.0, 0.30, 0.0, 1)
+emission_energy_multiplier = 1.8
+roughness                  = 0.90
+
+[sub_resource type="BoxShape3D" id="BoxShape_lava_area_hb"]
+size = Vector3(200, 2, 200)
+
+[node name="HellballArena" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Env_hb")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation       = Vector3(-0.872665, 0.523599, 0)
+light_color    = Color(1.0, 0.62, 0.32, 1)
+light_energy   = 1.0
+shadow_enabled = true
+
+[node name="LavaMesh" type="MeshInstance3D" parent="."]
+position = Vector3(0, -0.25, 0)
+mesh     = SubResource("BoxMesh_lava_hb")
+surface_material_override/0 = SubResource("Mat_lava_hb")
+
+[node name="LavaArea" type="Area3D" parent="."]
+position = Vector3(0, -1, 0)
+
+[node name="LavaShape" type="CollisionShape3D" parent="LavaArea"]
+shape = SubResource("BoxShape_lava_area_hb")
+
+[node name="Platform" type="StaticBody3D" parent="."]
+position = Vector3(0, 1, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Platform"]
+mesh = SubResource("BoxMesh_plat_hb")
+surface_material_override/0 = SubResource("Mat_plat_hb")
+
+[node name="Collision" type="CollisionShape3D" parent="Platform"]
+shape = SubResource("BoxShape_plat_hb")
+
+[node name="CenterRing" type="MeshInstance3D" parent="."]
+position = Vector3(0, 2.05, 0)
+mesh     = SubResource("BoxMesh_ring_hb")
+surface_material_override/0 = SubResource("Mat_ring_hb")
+
+[node name="PillarNE" type="StaticBody3D" parent="."]
+position = Vector3(6.5, 4.5, 6.5)
+
+[node name="Mesh" type="MeshInstance3D" parent="PillarNE"]
+mesh = SubResource("BoxMesh_pillar_hb")
+surface_material_override/0 = SubResource("Mat_pillar_hb")
+
+[node name="Collision" type="CollisionShape3D" parent="PillarNE"]
+shape = SubResource("BoxShape_pillar_hb")
+
+[node name="PillarNW" type="StaticBody3D" parent="."]
+position = Vector3(-6.5, 4.5, 6.5)
+
+[node name="Mesh" type="MeshInstance3D" parent="PillarNW"]
+mesh = SubResource("BoxMesh_pillar_hb")
+surface_material_override/0 = SubResource("Mat_pillar_hb")
+
+[node name="Collision" type="CollisionShape3D" parent="PillarNW"]
+shape = SubResource("BoxShape_pillar_hb")
+
+[node name="PillarSE" type="StaticBody3D" parent="."]
+position = Vector3(6.5, 4.5, -6.5)
+
+[node name="Mesh" type="MeshInstance3D" parent="PillarSE"]
+mesh = SubResource("BoxMesh_pillar_hb")
+surface_material_override/0 = SubResource("Mat_pillar_hb")
+
+[node name="Collision" type="CollisionShape3D" parent="PillarSE"]
+shape = SubResource("BoxShape_pillar_hb")
+
+[node name="PillarSW" type="StaticBody3D" parent="."]
+position = Vector3(-6.5, 4.5, -6.5)
+
+[node name="Mesh" type="MeshInstance3D" parent="PillarSW"]
+mesh = SubResource("BoxMesh_pillar_hb")
+surface_material_override/0 = SubResource("Mat_pillar_hb")
+
+[node name="Collision" type="CollisionShape3D" parent="PillarSW"]
+shape = SubResource("BoxShape_pillar_hb")
+
+[node name="SpawnPoints" type="Node3D" parent="."]
+
+[node name="Spawn1" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(9, 3, 9)
+
+[node name="Spawn2" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(-9, 3, 9)
+
+[node name="Spawn3" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(9, 3, -9)
+
+[node name="Spawn4" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(-9, 3, -9)
+
+[node name="Players" type="Node3D" parent="."]
+
+[node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="."]
+spawn_path = NodePath("../Players")
+
+[node name="HellballManager" type="Node" parent="."]
+script = ExtResource("1_hb")
+
+[node name="HUD" parent="." instance=ExtResource("2_hud")]
+
+[node name="PauseMenu" parent="." instance=ExtResource("3_pm")]

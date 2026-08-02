@@ -1,0 +1,63 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/player/hellball_player.gd" id="1_player"]
+[ext_resource type="Script" path="res://scripts/player/player_camera.gd" id="2_camera"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
+radius = 0.38
+height = 1.1
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_1"]
+radius = 0.36
+height = 1.05
+
+[sub_resource type="StandardMaterial3D" id="Material_player"]
+albedo_color = Color(0.72, 0.56, 0.28, 1)
+roughness = 0.8
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_1"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/sync = true
+properties/0/watch_mode = 0
+properties/1/path = NodePath("MeshPivot:rotation")
+properties/1/spawn = true
+properties/1/sync = true
+properties/1/watch_mode = 0
+properties/2/path = NodePath(".:guarding")
+properties/2/spawn = true
+properties/2/sync = true
+properties/2/watch_mode = 0
+
+[node name="Player" type="CharacterBody3D"]
+script = ExtResource("1_player")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.6, 0)
+shape = SubResource("CapsuleShape3D_1")
+
+[node name="MeshPivot" type="Node3D" parent="."]
+position = Vector3(0, 0.6, 0)
+
+[node name="BodyMesh" type="MeshInstance3D" parent="MeshPivot"]
+mesh = SubResource("CapsuleMesh_1")
+surface_material_override/0 = SubResource("Material_player")
+
+[node name="NameLabel" type="Label3D" parent="."]
+position = Vector3(0, 1.5, 0)
+billboard = 1
+no_depth_test = true
+font_size = 32
+outline_size = 8
+text = "Capivara"
+
+[node name="CameraRig" type="Node3D" parent="."]
+script = ExtResource("2_camera")
+
+[node name="SpringArm3D" type="SpringArm3D" parent="CameraRig"]
+spring_length = 5.0
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig/SpringArm3D"]
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_config = SubResource("SceneReplicationConfig_1")

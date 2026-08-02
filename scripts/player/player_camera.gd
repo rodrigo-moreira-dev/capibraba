@@ -9,8 +9,20 @@ extends Node3D
 var _yaw := 0.0
 var _pitch := deg_to_rad(-20.0)
 
+## Screen shake (Game Feel) — usado por impactos
+var _shake_time := 0.0
+var _shake_duration := 0.0
+var _shake_strength := 0.0
+
 @onready var spring_arm: SpringArm3D = $SpringArm3D
 @onready var _player: Node3D = get_parent() as Node3D
+
+
+## Aplica um screen shake decrescente (intensidade 0..1+).
+func shake(strength: float, duration: float) -> void:
+	_shake_strength = maxf(_shake_strength, strength)
+	_shake_time = maxf(_shake_time, duration)
+	_shake_duration = _shake_time
 
 
 func _ready() -> void:
@@ -43,7 +55,19 @@ func _physics_process(delta: float) -> void:
 	)
 
 	var target := _player.global_position + Vector3(0, 0.8, 0)
-	global_position = global_position.lerp(target, follow_speed * delta)
+	var base := global_position.lerp(target, follow_speed * delta)
+
+	# Screen shake (Game Feel): decai com o tempo restante
+	var shake_offset := Vector3.ZERO
+	if _shake_time > 0.0:
+		_shake_time -= delta
+		var t := clampf(_shake_time / maxf(_shake_duration, 0.001), 0.0, 1.0)
+		shake_offset = Vector3(
+			randf_range(-1.0, 1.0),
+			randf_range(-1.0, 1.0),
+			0.0
+		) * _shake_strength * t
+	global_position = base + shake_offset
 
 	rotation.y = _yaw
 	spring_arm.rotation.x = _pitch

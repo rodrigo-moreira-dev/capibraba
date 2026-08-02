@@ -69,7 +69,7 @@ func _try_spawn_powerup() -> void:
 		return
 	
 	var available_types := MatchSettings.get_enabled_powerups()
-	if available_type s.is_empty():
+	if available_types.is_empty():
 		return
 	
 	var type: String = available_types[_rng.randi() % available_types.size()]
