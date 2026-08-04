@@ -5,6 +5,8 @@ const MODES := [
 	{id = "hellball",      name = "Hellball",                 desc = "Charge Gun empurra para a lava.\nTeleport Gun troca de lugar!", color = Color(0.95, 0.40, 0.05), available = true},
 	{id = "hellball_platform", name = "Hellball\nPlataforma",  desc = "2D de lado. Pulos e\nplataformas na lava.",   color = Color(0.90, 0.55, 0.15), available = true},
 	{id = "hellball_topdown",  name = "Hellball\nTopdown",     desc = "2D visto de cima.\nMira no mouse.",          color = Color(0.95, 0.65, 0.10), available = true},
+	{id = "magnet",         name = "Ímãs",                     desc = "Polos opostos se atraem.\nArrraste rivais para a lava!", color = Color(0.30, 0.55, 1.00), available = true},
+	{id = "swords",         name = "Espadas",                  desc = "Espada 1-hit-kill.\nEspada x Espada = parry!", color = Color(0.80, 0.30, 0.25), available = true},
 	{id = "capivara_bomb", name = "Capivara Bomb",            desc = "Passe a bomba antes\nque exploda.",         color = Color(0.90, 0.55, 0.05), available = false},
 	{id = "king_of_hill",  name = "King of the Hill",         desc = "Domine a zona e\nacumule pontos.",          color = Color(0.15, 0.55, 0.80), available = false},
 	{id = "race",          name = "Corrida de\nObstáculos",   desc = "Primeiro ao fim\nvence.",                   color = Color(0.25, 0.70, 0.30), available = false},

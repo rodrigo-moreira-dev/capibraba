@@ -20,6 +20,8 @@ const MODE_NAMES := {
 	"hellball":      "Hellball",
 	"hellball_platform": "Hellball Plataforma",
 	"hellball_topdown":  "Hellball Topdown",
+	"magnet": "Ímãs",
+	"swords": "Espadas",
 	"capivara_bomb": "Capivara Bomb",
 	"king_of_hill":  "King of the Hill",
 	"race":          "Corrida de Obstáculos",
@@ -231,6 +233,10 @@ func _start_game(preset_id: String) -> void:
 			scene = "res://scenes/levels/hellball_platform.tscn"
 		"hellball_topdown":
 			scene = "res://scenes/levels/hellball_topdown.tscn"
+		"magnet":
+			scene = "res://scenes/levels/magnet_arena.tscn"
+		"swords":
+			scene = "res://scenes/levels/sword_arena.tscn"
 		_:
 			scene = ARENA_SCENES.get(
 				GameSettings.selected_arena,

@@ -5,6 +5,8 @@ const MODE_NAMES := {
 	"hellball":      "Hellball",
 	"hellball_platform": "Hellball Plataforma",
 	"hellball_topdown":  "Hellball Topdown",
+	"magnet": "Ímãs",
+	"swords": "Espadas",
 	"capivara_bomb": "Capivara Bomb",
 	"king_of_hill":  "King of the Hill",
 	"race":          "Corrida de Obstáculos",
