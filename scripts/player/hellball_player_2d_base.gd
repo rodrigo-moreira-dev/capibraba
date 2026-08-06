@@ -30,8 +30,8 @@ const CHARGE_RADIUS   := 150.0
 const TELEPORT_COOLDOWN := 0.4
 
 ## Ações básicas
-const PUNCH_RANGE    := 44.0
-const PUNCH_FORCE    := 280.0
+var punch_range     := 44.0   # var p/ permitir escala diferente (ex.: topdown novo)
+var punch_force     := 280.0
 const PUNCH_COOLDOWN := 0.4
 const PUNCH_WINDUP   := 0.08
 const GUARD_KNOCKBACK_REDUCTION := 0.2
@@ -165,9 +165,9 @@ func _try_punch() -> void:
 	if not is_inside_tree():
 		return
 	var dir := _aim_direction()
-	_broadcast_punch_2d.rpc(global_position, dir, get_multiplayer_authority(), PUNCH_FORCE)
+	_broadcast_punch_2d.rpc(global_position, dir, get_multiplayer_authority(), punch_force)
 	SfxBus.play("punch_hit")
-	_spawn_burst_2d(global_position + dir * PUNCH_RANGE * 0.8, Color(1.0, 0.85, 0.4, 0.9), 10, 0.25, 90.0)
+	_spawn_burst_2d(global_position + dir * punch_range * 0.8, Color(1.0, 0.85, 0.4, 0.9), 10, 0.25, 90.0)
 	_shake_2d(0.2, 0.1)
 
 
@@ -184,11 +184,11 @@ func _broadcast_punch_2d(pos: Vector2, dir: Vector2, attacker_id: int, force: fl
 			continue
 		var to := p.global_position - pos
 		var dist := to.length()
-		if dist > PUNCH_RANGE:
+		if dist > punch_range:
 			continue
 		if to.normalized().dot(dir.normalized()) < 0.3:
 			continue
-		var push := dir * force * (1.0 - dist / PUNCH_RANGE)
+		var push := dir * force * (1.0 - dist / punch_range)
 		if p.get("guarding"):
 			push *= GUARD_KNOCKBACK_REDUCTION
 			SfxBus.play("guard_block")

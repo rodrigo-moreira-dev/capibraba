@@ -10,7 +10,7 @@ class_name SwordManager2D
 ## A morte é decidida no fim da janela ativa para dar tempo ao parry simultâneo.
 
 const SWORD_ACTIVE  := 0.12   # precisa bater com SwordTopdownPlayer.SWORD_ACTIVE
-const SWORD_RANGE   := 60.0
+const SWORD_RANGE   := 12.0
 const SWORD_ARC_DEG := 100.0
 const PARRY_PUSH    := 260.0
 

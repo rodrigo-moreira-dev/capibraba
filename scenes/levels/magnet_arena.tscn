@@ -6,68 +6,77 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn"          id="4_pm"]
 [ext_resource type="PackedScene" path="res://scenes/player/magnet_topdown_player.tscn" id="5_mp"]
 
-[sub_resource type="RectangleShape2D" id="Shape_platform"]
-size = Vector2(900, 600)
-
-[sub_resource type="RectangleShape2D" id="Shape_obstacle"]
-size = Vector2(120, 120)
+[sub_resource type="RectangleShape2D" id="Shape_core"]
+size = Vector2(26, 26)
 
 [sub_resource type="RectangleShape2D" id="Shape_lava_top"]
-size = Vector2(1500, 160)
+size = Vector2(460, 32)
 
 [sub_resource type="RectangleShape2D" id="Shape_lava_side"]
-size = Vector2(220, 760)
+size = Vector2(32, 280)
 
 [node name="MagnetArena" type="Node2D"]
 
 [node name="Camera2D" type="Camera2D" parent="."]
+zoom = Vector2(4.6, 4.6)
 script = ExtResource("1_cam")
 
 [node name="Background" type="Polygon2D" parent="."]
 color = Color(0.03, 0.05, 0.12, 1)
-polygon = PackedVector2Array(-900, -600, 900, -600, 900, 600, -900, 600)
+polygon = PackedVector2Array(-260, -160, 260, -160, 260, 160, -260, 160)
 
-[node name="SafePlatform" type="StaticBody2D" parent="."]
-
-[node name="Collision" type="CollisionShape2D" parent="SafePlatform"]
-shape = SubResource("Shape_platform")
+[node name="SafePlatform" type="Node2D" parent="."]
 
 [node name="Visual" type="Polygon2D" parent="SafePlatform"]
-color = Color(0.15, 0.18, 0.26, 1)
-polygon = PackedVector2Array(-450, -300, 450, -300, 450, 300, -450, 300)
+color = Color(0.16, 0.19, 0.28, 1)
+polygon = PackedVector2Array(-95, -60, 95, -60, 95, 60, -95, 60)
+
+[node name="BorderTop" type="Polygon2D" parent="SafePlatform"]
+color = Color(0.21, 0.25, 0.36, 1)
+polygon = PackedVector2Array(-95, -60, 95, -60, 95, -56, -95, -56)
 
 [node name="MetalCore1" type="StaticBody2D" parent="."]
-position = Vector2(-280, -150)
+position = Vector2(-48, -32)
 
 [node name="Collision" type="CollisionShape2D" parent="MetalCore1"]
-shape = SubResource("Shape_obstacle")
+shape = SubResource("Shape_core")
 
 [node name="Visual" type="Polygon2D" parent="MetalCore1"]
-color = Color(0.35, 0.42, 0.52, 1)
-polygon = PackedVector2Array(-60, -60, 60, -60, 60, 60, -60, 60)
+color = Color(0.38, 0.46, 0.56, 1)
+polygon = PackedVector2Array(-13, -13, 13, -13, 13, 13, -13, 13)
 
 [node name="MetalCore2" type="StaticBody2D" parent="."]
-position = Vector2(280, 150)
+position = Vector2(48, 32)
 
 [node name="Collision" type="CollisionShape2D" parent="MetalCore2"]
-shape = SubResource("Shape_obstacle")
+shape = SubResource("Shape_core")
 
 [node name="Visual" type="Polygon2D" parent="MetalCore2"]
-color = Color(0.35, 0.42, 0.52, 1)
-polygon = PackedVector2Array(-60, -60, 60, -60, 60, 60, -60, 60)
+color = Color(0.38, 0.46, 0.56, 1)
+polygon = PackedVector2Array(-13, -13, 13, -13, 13, 13, -13, 13)
 
 [node name="MetalCore3" type="StaticBody2D" parent="."]
-position = Vector2(0, 0)
+position = Vector2(-48, 32)
 
 [node name="Collision" type="CollisionShape2D" parent="MetalCore3"]
-shape = SubResource("Shape_obstacle")
+shape = SubResource("Shape_core")
 
 [node name="Visual" type="Polygon2D" parent="MetalCore3"]
-color = Color(0.35, 0.42, 0.52, 1)
-polygon = PackedVector2Array(-60, -60, 60, -60, 60, 60, -60, 60)
+color = Color(0.38, 0.46, 0.56, 1)
+polygon = PackedVector2Array(-13, -13, 13, -13, 13, 13, -13, 13)
+
+[node name="MetalCore4" type="StaticBody2D" parent="."]
+position = Vector2(48, -32)
+
+[node name="Collision" type="CollisionShape2D" parent="MetalCore4"]
+shape = SubResource("Shape_core")
+
+[node name="Visual" type="Polygon2D" parent="MetalCore4"]
+color = Color(0.38, 0.46, 0.56, 1)
+polygon = PackedVector2Array(-13, -13, 13, -13, 13, 13, -13, 13)
 
 [node name="LavaTop" type="Area2D" parent="."]
-position = Vector2(0, -420)
+position = Vector2(0, -78)
 groups = ["lava_area"]
 
 [node name="Collision" type="CollisionShape2D" parent="LavaTop"]
@@ -75,14 +84,14 @@ shape = SubResource("Shape_lava_top")
 
 [node name="Visual" type="Polygon2D" parent="LavaTop"]
 color = Color(0.95, 0.38, 0.02, 1)
-polygon = PackedVector2Array(-750, -80, 750, -80, 750, 80, -750, 80)
+polygon = PackedVector2Array(-230, -16, 230, -16, 230, 16, -230, 16)
 
 [node name="Glow" type="PointLight2D" parent="LavaTop"]
 energy = 1.8
 color = Color(1, 0.45, 0.05, 1)
 
 [node name="LavaBottom" type="Area2D" parent="."]
-position = Vector2(0, 420)
+position = Vector2(0, 78)
 groups = ["lava_area"]
 
 [node name="Collision" type="CollisionShape2D" parent="LavaBottom"]
@@ -90,10 +99,10 @@ shape = SubResource("Shape_lava_top")
 
 [node name="Visual" type="Polygon2D" parent="LavaBottom"]
 color = Color(0.95, 0.38, 0.02, 1)
-polygon = PackedVector2Array(-750, -80, 750, -80, 750, 80, -750, 80)
+polygon = PackedVector2Array(-230, -16, 230, -16, 230, 16, -230, 16)
 
 [node name="LavaLeft" type="Area2D" parent="."]
-position = Vector2(-580, 0)
+position = Vector2(-111, 0)
 groups = ["lava_area"]
 
 [node name="Collision" type="CollisionShape2D" parent="LavaLeft"]
@@ -101,10 +110,10 @@ shape = SubResource("Shape_lava_side")
 
 [node name="Visual" type="Polygon2D" parent="LavaLeft"]
 color = Color(0.95, 0.38, 0.02, 1)
-polygon = PackedVector2Array(-110, -380, 110, -380, 110, 380, -110, 380)
+polygon = PackedVector2Array(-16, -140, 16, -140, 16, 140, -16, 140)
 
 [node name="LavaRight" type="Area2D" parent="."]
-position = Vector2(580, 0)
+position = Vector2(111, 0)
 groups = ["lava_area"]
 
 [node name="Collision" type="CollisionShape2D" parent="LavaRight"]
@@ -112,21 +121,21 @@ shape = SubResource("Shape_lava_side")
 
 [node name="Visual" type="Polygon2D" parent="LavaRight"]
 color = Color(0.95, 0.38, 0.02, 1)
-polygon = PackedVector2Array(-110, -380, 110, -380, 110, 380, -110, 380)
+polygon = PackedVector2Array(-16, -140, 16, -140, 16, 140, -16, 140)
 
 [node name="SpawnPoints" type="Node2D" parent="."]
 
 [node name="Spawn1" type="Marker2D" parent="SpawnPoints"]
-position = Vector2(300, 180)
+position = Vector2(60, 35)
 
 [node name="Spawn2" type="Marker2D" parent="SpawnPoints"]
-position = Vector2(-300, 180)
+position = Vector2(-60, 35)
 
 [node name="Spawn3" type="Marker2D" parent="SpawnPoints"]
-position = Vector2(300, -180)
+position = Vector2(60, -35)
 
 [node name="Spawn4" type="Marker2D" parent="SpawnPoints"]
-position = Vector2(-300, -180)
+position = Vector2(-60, -35)
 
 [node name="Players" type="Node2D" parent="."]
 

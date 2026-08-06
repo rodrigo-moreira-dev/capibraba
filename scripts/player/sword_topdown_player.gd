@@ -15,12 +15,12 @@ class_name SwordTopdownPlayer
 const SWORD_WINDUP   := 0.08
 const SWORD_ACTIVE   := 0.12
 const SWORD_RECOVERY := 0.30
-const SWORD_RANGE    := 60.0
+const SWORD_RANGE    := 12.0
 const SWORD_ARC_DEG  := 100.0
 const SWORD_CD       := 0.5
 
 ## Bota de Dash (ajusta os parâmetros da base)
-const BOOT_DASH_SPEED := 520.0
+const BOOT_DASH_SPEED := 340.0
 const BOOT_DASH_TIME  := 0.18
 const BOOT_DASH_CD    := 0.15
 const BOOT_IFRAMES    := 0.20
@@ -135,8 +135,8 @@ func play_death_flash() -> void:
 func _build_sword_visual() -> void:
 	_blade = Polygon2D.new()
 	_blade.polygon = PackedVector2Array([
-		Vector2(0.0, -0.06), Vector2(1.05, -0.06),
-		Vector2(1.05, 0.06), Vector2(0.0, 0.06),
+		Vector2(0.0, -0.09), Vector2(4.8, -0.09),
+		Vector2(4.8, 0.09), Vector2(0.0, 0.09),
 	])
 	_blade.color = Color(0.85, 0.92, 1.0)
 	_blade.visible = false
@@ -144,8 +144,8 @@ func _build_sword_visual() -> void:
 
 	_blade_glow = Polygon2D.new()
 	_blade_glow.polygon = PackedVector2Array([
-		Vector2(-0.10, -0.16), Vector2(1.15, -0.16),
-		Vector2(1.15, 0.16), Vector2(-0.10, 0.16),
+		Vector2(-0.10, -0.18), Vector2(5.0, -0.18),
+		Vector2(5.0, 0.18), Vector2(-0.10, 0.18),
 	])
 	_blade_glow.color = Color(0.60, 0.90, 1.0, 0.25)
 	_blade_glow.visible = false

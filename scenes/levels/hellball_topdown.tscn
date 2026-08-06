@@ -27,10 +27,7 @@ script = ExtResource("1_cam")
 color = Color(0.07, 0.03, 0.02, 1)
 polygon = PackedVector2Array(-900, -600, 900, -600, 900, 600, -900, 600)
 
-[node name="SafePlatform" type="StaticBody2D" parent="."]
-
-[node name="Collision" type="CollisionShape2D" parent="SafePlatform"]
-shape = SubResource("Shape_platform")
+[node name="SafePlatform" type="Node2D" parent="."]
 
 [node name="Visual" type="Polygon2D" parent="SafePlatform"]
 color = Color(0.24, 0.20, 0.17, 1)

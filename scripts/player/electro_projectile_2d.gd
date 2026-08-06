@@ -6,7 +6,7 @@ extends Area2D
 ## REFLETIDO de volta ao atirador com o polo invertido (fica útil contra ele).
 ## O projétil é LOCAL a quem disparou; o efeito é transmitido por RPC (padrão).
 
-const SPEED    := 340.0
+const SPEED    := 260.0
 const LIFETIME := 1.6
 
 var direction    := Vector2.RIGHT
@@ -48,11 +48,11 @@ func _build_visual() -> void:
 	_visual.name = "Visual"
 	add_child(_visual)
 	_glow = Polygon2D.new()
-	_glow.polygon = _circle_polygon(0.5)
+	_glow.polygon = _circle_polygon(1.3)
 	_glow.color = Color(0.4, 0.8, 1.0, 0.30)
 	_visual.add_child(_glow)
 	_core = Polygon2D.new()
-	_core.polygon = _circle_polygon(0.28)
+	_core.polygon = _circle_polygon(0.9)
 	_core.color = _pole_color()
 	_visual.add_child(_core)
 

@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scripts/player/sword_topdown_player.gd" id="1_sp"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_sp"]
-radius = 0.7
+radius = 1.5
 
 [sub_resource type="SceneReplicationConfig" id="ReplicationConfig_sp"]
 properties/0/path = NodePath(".:position")

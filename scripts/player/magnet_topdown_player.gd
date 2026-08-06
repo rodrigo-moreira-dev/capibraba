@@ -14,16 +14,16 @@ class_name MagnetTopdownPlayer
 const ELECTRO_SCENE := preload("res://scenes/player/electro_projectile_2d.tscn")
 
 ## Ímã
-const FIELD_RADIUS   := 150.0
+const FIELD_RADIUS   := 45.0
 const CHARGE_TIME    := 1.0
 ## Força do campo por frame (aplicada em cada physics frame na vítima; o
-## movimento dela "consome" ~20/frame, então ~26/frame vira um arrasto suave).
-const FIELD_STRENGTH := 26.0
+## movimento dela "consome" ~16/frame, então ~20/frame vira um arrasto suave).
+const FIELD_STRENGTH := 20.0
 const POLE_CD        := 0.25
 const FIELD_CD       := 0.4
-const PROJECTILE_SPEED := 340.0
-const HIT_RADIUS     := 130.0
-const HIT_FORCE      := 420.0
+const PROJECTILE_SPEED := 260.0
+const HIT_RADIUS     := 40.0
+const HIT_FORCE      := 360.0
 
 ## Escudo magnético
 const SHIELD_RADIUS_UP := 1.05   # escala do visual do escudo ao erguer

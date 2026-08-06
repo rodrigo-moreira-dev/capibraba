@@ -9,12 +9,15 @@ class_name ArenaTopdownPlayerBase
 ##   - _on_item_input(event): entrada do item (chamado só na autoridade)
 ## Herda as ações básicas (Punch, Guard, Dash) da HellballPlayer2DBase.
 
-const SPEED := 175.0
-const ACCEL := 1200.0
+## Escala 2D dos minigames topdown novos: jogador bem visível na arena.
+const VISUAL_SCALE := 2.5
+
+const SPEED := 130.0
+const ACCEL := 1000.0
 const LAVA_CENTER_PUSH := 540.0
 
 ## Dash (parâmetros configuráveis - a subclasse pode ajustar, ex.: Bota)
-var dash_speed      := 430.0
+var dash_speed      := 280.0
 var dash_time       := 0.16
 var dash_cd_time    := 0.6
 var dash_iframe_time := 0.0
@@ -24,6 +27,35 @@ var _dash_timer  := 0.0
 var _dash_cd     := 0.0
 var _dash_dir    := Vector2.ZERO
 var dashing      := false  # replicado: usado p/ i-frames (ex.: bota de dash)
+
+var _shadow: Polygon2D
+
+
+func _ready() -> void:
+	# Ações básicas na escala dos minigames topdown (Punch perto do corpo)
+	punch_range = 12.0
+	punch_force = 240.0
+	super._ready()
+
+
+func _build_visual() -> void:
+	super._build_visual()
+	# Sombra sutil (ajuda a "aterrar" o personagem no topdown)
+	_shadow = Polygon2D.new()
+	_shadow.polygon = _circle_polygon(0.8)
+	_shadow.color = Color(0.0, 0.0, 0.0, 0.25)
+	_shadow.position = Vector2(0.25, 0.4)
+	_visual.add_child(_shadow)
+	_visual.move_child(_shadow, 0)
+	# Nome acima da cabeça (escala maior)
+	if is_instance_valid(_name_label):
+		_name_label.position = Vector2(0, -4.2)
+
+
+func _update_visual(delta: float) -> void:
+	# Aplica a escala visual maior do topdown (além do squash & stretch)
+	_base_scale = Vector2.ONE * VISUAL_SCALE
+	super._update_visual(delta)
 
 
 func _physics_process(delta: float) -> void:
