@@ -25,6 +25,7 @@ var _kill_streak_panel: PanelContainer
 var _announce_panel: PanelContainer
 var _announce_lbl: Label
 var _hint_lbl: Label
+var _diag_lbl: Label
 
 
 func _ready() -> void:
@@ -33,6 +34,7 @@ func _ready() -> void:
 	NetworkManager.players_updated.connect(_refresh)
 	_refresh()
 	_build_scoreboard()
+	_build_diagnostics()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -40,6 +42,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		var ke := event as InputEventKey
 		if ke.physical_keycode == KEY_TAB:
 			_scoreboard.visible = ke.pressed
+			get_viewport().set_input_as_handled()
+		if ke.physical_keycode == KEY_F3 and ke.pressed:
+			TelemetryStats.diagnostics_enabled = not TelemetryStats.diagnostics_enabled
+			if is_instance_valid(_diag_lbl):
+				_diag_lbl.visible = TelemetryStats.diagnostics_enabled
 			get_viewport().set_input_as_handled()
 
 
@@ -281,3 +288,41 @@ func show_mode_hint(text: String) -> void:
 		_hint_lbl.add_theme_constant_override("outline_size", 6)
 		add_child(_hint_lbl)
 	_hint_lbl.text = text
+
+
+# ── Diagnóstico de resposta (F3) ─────────────────────────────────────────────
+
+func _build_diagnostics() -> void:
+	_diag_lbl = Label.new()
+	_diag_lbl.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	_diag_lbl.offset_left   = 16.0
+	_diag_lbl.offset_top    = -110.0
+	_diag_lbl.offset_bottom = -18.0
+	_diag_lbl.offset_right  = 360.0
+	_diag_lbl.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	_diag_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_diag_lbl.add_theme_font_size_override("font_size", 13)
+	_diag_lbl.add_theme_color_override("font_color", Color(0.3, 0.9, 0.5))
+	_diag_lbl.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.7))
+	_diag_lbl.add_theme_constant_override("outline_size", 6)
+	_diag_lbl.visible = false
+	add_child(_diag_lbl)
+	# Atualiza a cada 0.25 s enquanto visível.
+	_process_diag_tick(0.0)
+
+
+func _process_diag_tick(dt: float) -> void:
+	await get_tree().create_timer(0.25).timeout
+	if not is_instance_valid(_diag_lbl):
+		return
+	if _diag_lbl.visible:
+		var s := TelemetryStats.summary()
+		var lines := "RESPONSE (F3 p/ fechar)\n"
+		for action: String in s:
+			var d: Dictionary = s[action]
+			lines += "%s  avg %d ms  p95 %d ms\n" % [action, int(d.avg_ms), int(d.p95_ms)]
+		var worst := TelemetryStats.worst_p95_ms()
+		var ok := worst < 100.0
+		lines += "worst p95 %d ms  %s" % [int(worst), "OK<100ms" if ok else "ACIMA<100ms"]
+		_diag_lbl.text = lines
+	_process_diag_tick(0.0)

@@ -30,6 +30,29 @@ var kill_streak_bonus: int = 3  # Vidas extras a cada X kills
 var powerups_enabled: bool = false
 var powerup_spawn_interval: float = 12.0
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# CATEGORIA 1B: SISTEMA DE ITENS GENÉRICO
+# ═══════════════════════════════════════════════════════════════════════════════
+# Cada minigame define quantos slots de item e quais itens do pool entram.
+# As ações básicas (Punch/Guard/Dash) nunca somem — no máximo são RESTRITAS por
+# decisão de design do minigame (sempre documentado). Implementado na Fase 0.
+
+## Número de slots de item por jogador (1, 2 ou 3), configurável por minigame.
+var item_slots: int = 2
+
+## Pool de itens disponíveis para este minigame (ids do ItemCatalog).
+var items_pool: PackedStringArray = PackedStringArray(["charge_gun", "teleport_gun"])
+
+## Ação básica: Punch (ataque melee). Sempre disponível; pode ser restrita por
+## decisão de design do minigame.
+var punch_enabled: bool = true
+
+## Ação básica: Guard (defesa). Sempre disponível; pode ser restrita.
+var guard_enabled: bool = true
+
+## Ação básica: Dash (movimentação). Sempre disponível; pode ser restrita.
+var dash_enabled: bool = true
+
 var powerup_shield_enabled: bool = true        ## 1.1 - Protege de 1 explosão/lava
 var powerup_superspeed_enabled: bool = true    ## 1.2 - Velocidade aumentada
 var powerup_triple_jump_enabled: bool = true   ## 1.3 - Pulo extra temporário
@@ -128,6 +151,13 @@ func save() -> void:
 	cfg.set_value("powerups", "mine", powerup_mine_enabled)
 	cfg.set_value("powerups", "magnet", powerup_magnet_enabled)
 	cfg.set_value("powerups", "zero_gravity", powerup_zero_gravity_enabled)
+
+	# Itens genéricos
+	cfg.set_value("items", "slots", item_slots)
+	cfg.set_value("items", "pool", items_pool)
+	cfg.set_value("items", "punch_enabled", punch_enabled)
+	cfg.set_value("items", "guard_enabled", guard_enabled)
+	cfg.set_value("items", "dash_enabled", dash_enabled)
 	
 	# Arena Events
 	cfg.set_value("arena", "events_enabled", arena_events_enabled)
@@ -185,6 +215,14 @@ func load() -> void:
 	powerup_mine_enabled = cfg.get_value("powerups", "mine", true)
 	powerup_magnet_enabled = cfg.get_value("powerups", "magnet", true)
 	powerup_zero_gravity_enabled = cfg.get_value("powerups", "zero_gravity", true)
+
+	# Itens genéricos
+	item_slots = cfg.get_value("items", "slots", 2)
+	var pool: PackedStringArray = cfg.get_value("items", "pool", PackedStringArray(["charge_gun", "teleport_gun"]))
+	items_pool = pool if pool.size() > 0 else PackedStringArray(["charge_gun", "teleport_gun"])
+	punch_enabled = cfg.get_value("items", "punch_enabled", true)
+	guard_enabled = cfg.get_value("items", "guard_enabled", true)
+	dash_enabled = cfg.get_value("items", "dash_enabled", true)
 	
 	# Arena Events
 	arena_events_enabled = cfg.get_value("arena", "events_enabled", false)
@@ -234,6 +272,13 @@ func reset_to_defaults() -> void:
 	powerup_mine_enabled = true
 	powerup_magnet_enabled = true
 	powerup_zero_gravity_enabled = true
+
+	# Itens genéricos
+	item_slots = 2
+	items_pool = PackedStringArray(["charge_gun", "teleport_gun"])
+	punch_enabled = true
+	guard_enabled = true
+	dash_enabled = true
 	
 	arena_events_enabled = false
 	arena_event_interval = 20.0
@@ -287,3 +332,26 @@ func any_ability_enabled() -> bool:
 	return ability_grappling_hook_enabled or ability_teleport_enabled or \
 		   ability_freeze_enabled or ability_body_push_enabled or \
 		   ability_air_dash_enabled or ability_ground_pound_enabled
+
+
+func get_enabled_items() -> PackedStringArray:
+	## Itens do pool limitados ao número de slots configurado para o minigame.
+	var result := PackedStringArray()
+	var pool := items_pool
+	if pool.size() == 0:
+		return result
+	var slots := clampi(item_slots, 1, 3)
+	var limit := mini(pool.size(), slots)
+	for i in limit:
+		result.append(pool[i])
+	return result
+
+
+func get_enabled_basic_actions() -> Dictionary:
+	## Ações básicas disponíveis neste minigame. Regra: nunca somem por causa de
+	## item — no máximo ficam RESTRITAS por decisão de design (documentado).
+	return {
+		"punch": punch_enabled,
+		"guard": guard_enabled,
+		"dash": dash_enabled,
+	}

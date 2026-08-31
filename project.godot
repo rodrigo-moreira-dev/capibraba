@@ -23,6 +23,7 @@ GameSettings="*res://scripts/game/game_settings.gd"
 MatchSettings="*res://scripts/game/match_settings.gd"
 MatchPresets="*res://scripts/game/match_presets.gd"
 SfxBus="*res://scripts/audio/sfx_bus.gd"
+TelemetryStats="*res://scripts/audio/telemetry_stats.gd"
 
 [input]
 

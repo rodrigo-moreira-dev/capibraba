@@ -9,8 +9,9 @@ class_name ArenaTopdownPlayerBase
 ##   - _on_item_input(event): entrada do item (chamado só na autoridade)
 ## Herda as ações básicas (Punch, Guard, Dash) da HellballPlayer2DBase.
 
-## Escala 2D dos minigames topdown novos: jogador bem visível na arena.
-const VISUAL_SCALE := 2.5
+## Escala 2D dos minigames topdown novos: o sprite PICO-8 já é grande (~40px);
+## esta base não aplica mais escala extra além do squash & stretch.
+const VISUAL_SCALE := 1.0
 
 const SPEED := 130.0
 const ACCEL := 1000.0
@@ -26,7 +27,7 @@ var _is_dashing  := false
 var _dash_timer  := 0.0
 var _dash_cd     := 0.0
 var _dash_dir    := Vector2.ZERO
-var dashing      := false  # replicado: usado p/ i-frames (ex.: bota de dash)
+# `dashing` vem da HellballPlayer2DBase (replicado p/ i-frames); não redeclarar.
 
 var _shadow: Polygon2D
 

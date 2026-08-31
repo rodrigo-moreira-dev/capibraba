@@ -45,6 +45,20 @@ func _ready() -> void:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# REPLICAÇÃO DE ESTADO (CRÍTICA 3): todos os peers veem o mesmo polo
+# ═══════════════════════════════════════════════════════════════════════════════
+
+func _replicated_state() -> Dictionary:
+	var st := super._replicated_state()
+	st.pole = pole
+	return st
+
+
+func _apply_replicated_extras(pol: int, _swg: bool) -> void:
+	pole = pol
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # ITEM - ÍMÃ
 # ═══════════════════════════════════════════════════════════════════════════════
 

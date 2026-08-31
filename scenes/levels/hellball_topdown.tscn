@@ -21,6 +21,8 @@ size = Vector2(220, 760)
 [node name="HellballTopdown" type="Node2D"]
 
 [node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(0, 0)
+zoom = Vector2(0.9, 0.9)
 script = ExtResource("1_cam")
 
 [node name="Background" type="Polygon2D" parent="."]

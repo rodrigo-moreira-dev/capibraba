@@ -51,7 +51,7 @@ func _move(delta: float) -> void:
 		velocity = _dash_dir * DASH_SPEED
 		if _dash_timer <= 0.0:
 			_is_dashing = false
-	elif Input.is_action_just_pressed("dash") and _dash_cd <= 0.0:
+	elif Input.is_action_just_pressed("dash") and _dash_cd <= 0.0 and _has_basic("dash"):
 		_dash_dir = raw if raw.length_squared() > 0.01 else _aim_direction()
 		_dash_dir = _dash_dir.normalized()
 		_is_dashing = true

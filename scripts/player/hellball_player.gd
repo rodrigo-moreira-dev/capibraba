@@ -39,6 +39,11 @@ var _charge_indicator: MeshInstance3D
 var _guard_shield: MeshInstance3D
 var guarding := false
 var _hitstop_count := 0
+var _dashing_3d := false  # replicado (i-frames em dash)
+
+# Replicação de estado (CRÍTICA 3): transmite guarding/facing para os peers.
+var _last_sync_guarding: bool = false
+var _last_sync_facing: Vector3 = Vector3.FORWARD
 
 
 func _ready() -> void:
@@ -54,7 +59,43 @@ func _physics_process(delta: float) -> void:
 	_punch_cd    = maxf(_punch_cd    - delta, 0.0)
 	_update_charge(delta)
 	_update_guard(delta)
+	_replicate_state_3d()
 	super._physics_process(delta)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# REPLICAÇÃO DE ESTADO (CRÍTICA 3) — 3D
+# ═══════════════════════════════════════════════════════════════════════════════
+# `guarding` é estado de momento que todos devem ver para o parry/knockback ser
+# justo. O dono do nó transmite; os outros aplicam. Anti-cheat: só aceita estado
+# vindo da autoridade deste jogador.
+
+func _facing_dir_3d() -> Vector3:
+	var dir: Vector3 = -aim_camera.global_basis.z
+	dir.y = 0.0
+	return dir.normalized()
+
+
+func _replicate_state_3d() -> void:
+	if not is_multiplayer_authority():
+		return
+	var face := _facing_dir_3d()
+	if guarding == _last_sync_guarding and face.distance_to(_last_sync_facing) < 0.01:
+		return
+	_last_sync_guarding = guarding
+	_last_sync_facing   = face
+	if multiplayer.has_multiplayer_peer():
+		_broadcast_state_3d.rpc(guarding, face)
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _broadcast_state_3d(grd: bool, face: Vector3) -> void:
+	var sid := multiplayer.get_remote_sender_id()
+	if sid != 0 and sid != get_multiplayer_authority():
+		return
+	if is_multiplayer_authority():
+		return
+	guarding = grd
 
 
 func _unhandled_input(event: InputEvent) -> void:

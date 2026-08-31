@@ -1,10 +1,11 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script"      path="res://scripts/arena/arena_camera_2d.gd" id="1_cam"]
 [ext_resource type="Script"      path="res://scripts/game/hellball_manager_2d.gd" id="2_mgr"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn"                 id="3_hud"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn"          id="4_pm"]
 [ext_resource type="PackedScene" path="res://scenes/player/hellball_platform_player.tscn" id="5_pp"]
+[ext_resource type="Script"      path="res://scripts/arena/arena_tile_renderer.gd" id="6_tiles"]
 
 [sub_resource type="RectangleShape2D" id="Shape_ground"]
 size = Vector2(700, 60)
@@ -24,7 +25,8 @@ size = Vector2(700, 20)
 [node name="HellballPlatform" type="Node2D"]
 
 [node name="Camera2D" type="Camera2D" parent="."]
-position = Vector2(320, 300)
+position = Vector2(320, 330)
+zoom = Vector2(1.6, 1.6)
 script = ExtResource("1_cam")
 
 [node name="Background" type="Polygon2D" parent="."]
@@ -33,6 +35,7 @@ polygon = PackedVector2Array(-400, -160, 1040, -160, 1040, 760, -400, 760)
 
 [node name="Ground" type="StaticBody2D" parent="."]
 position = Vector2(320, 480)
+groups = ["tiled_ground"]
 
 [node name="Collision" type="CollisionShape2D" parent="Ground"]
 shape = SubResource("Shape_ground")
@@ -43,6 +46,7 @@ polygon = PackedVector2Array(-350, -30, 350, -30, 350, 30, -350, 30)
 
 [node name="PlatformLeft" type="StaticBody2D" parent="."]
 position = Vector2(180, 360)
+groups = ["tiled_ground"]
 
 [node name="Collision" type="CollisionShape2D" parent="PlatformLeft"]
 shape = SubResource("Shape_small")
@@ -53,6 +57,7 @@ polygon = PackedVector2Array(-75, -12, 75, -12, 75, 12, -75, 12)
 
 [node name="PlatformRight" type="StaticBody2D" parent="."]
 position = Vector2(460, 360)
+groups = ["tiled_ground"]
 
 [node name="Collision" type="CollisionShape2D" parent="PlatformRight"]
 shape = SubResource("Shape_small")
@@ -63,6 +68,7 @@ polygon = PackedVector2Array(-75, -12, 75, -12, 75, 12, -75, 12)
 
 [node name="PlatformMid" type="StaticBody2D" parent="."]
 position = Vector2(320, 250)
+groups = ["tiled_ground"]
 
 [node name="Collision" type="CollisionShape2D" parent="PlatformMid"]
 shape = SubResource("Shape_mid")
@@ -73,6 +79,7 @@ polygon = PackedVector2Array(-90, -12, 90, -12, 90, 12, -90, 12)
 
 [node name="Ceiling" type="StaticBody2D" parent="."]
 position = Vector2(320, 60)
+groups = ["tiled_ground"]
 
 [node name="Collision" type="CollisionShape2D" parent="Ceiling"]
 shape = SubResource("Shape_wall")
@@ -119,6 +126,9 @@ spawn_path = NodePath("../Players")
 script = ExtResource("2_mgr")
 player_scene = ExtResource("5_pp")
 mode_hint = "Plataforma — Charge Gun: segure/solte Esq.  ·  Teleport Gun: Dir (2x = teleportar)  ·  Punch: E  ·  Guard: Ctrl"
+
+[node name="TileRenderer" type="Node2D" parent="."]
+script = ExtResource("6_tiles")
 
 [node name="HUD" parent="." instance=ExtResource("3_hud")]
 

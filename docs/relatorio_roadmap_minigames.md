@@ -111,6 +111,52 @@ dívida conhecida.
 > priorizar a espada por apelo, ela pode vir antes — mas o esforço será maior
 > no mesmo faseamento.
 
+### ✅ Progresso da Fase 0 (implementado)
+
+| CRÍTICA | Status | O que foi feito |
+|---|---|---|
+| **1 — Itens genéricos** | ✅ | `MatchSettings` + campos `item_slots`/`items_pool`/`punch_enabled`/`guard_enabled`/`dash_enabled` (com save/load/reset + `get_enabled_items()`/`get_enabled_basic_actions()`). Novo `scripts/items/item_catalog.gd` (`ItemCatalog`) com configuração declarativa dos itens (uso primário/secundário, cooldown, cena, cor). Players 2D agora consultam `MatchSettings`/`ItemCatalog` (`_has_item`/`_has_basic`) em vez de itens hardcoded. |
+| **2 — Unificação de managers** | ✅ (2D + 3D) | Nova base comum `scripts/game/arena_rules_base.gd` (`ArenaRulesBase`, agnóstica de dimensão) com toda a lógica de regras (vida/abate/eliminação/vitória/reporte de lava). `ArenaManager2DBase` (2D) e `hellball_manager.gd` (3D) agora herdam dela; só os hooks de dimensão (spawn, container, efeito) ficam nas folhas. Eliminada a duplicação de vida/lava/placar entre 2D e 3D. |
+| **3 — Replicação de estado** | 🟡 (2D ✅, 3D parcial) | `HellballPlayer2DBase` ganhou `_replicate_state()`/`_broadcast_replicated_state` (RPC validated): transmite `guarding`/`facing`/`dashing` e campos extras por subclasse. `MagnetTopdownPlayer` registra `pole`; `SwordTopdownPlayer` registra `swinging`; **3D `hellball_player.gd`** ganhou `_replicate_state_3d()`/`_broadcast_state_3d` para `guarding`/facing. Assim **todos os peers veem o mesmo momento** (parry/knockback justo). |
+| **4 — Anti-cheat** | ✅ | Revisado: nenhum RPC `any_peer` permite ao cliente decidir morte/troca. Todo efeito de estado é resolvido no servidor (`is_server()` + `get_remote_sender_id()` validado) e os `call_local` de efeito checam o remetente. O novo `_broadcast_replicated_state` também só aceita estado vindo da autoridade do nó. |
+| **Testes** | ✅ (semente) | `tests/netcode/simulation_test.gd` (headless, determinístico) valida convergência de vida/abate. Rodar com `godot --headless --script tests/netcode/simulation_test.gd`. O plano completo (13 cenários) está em `docs/netcode/test-plan.md`. |
+
+> ⚠️ **Dívida conhecida:** a Fase 0 2D está implementada e coesa, mas **3D** ainda
+> tem `guarding` local e o `hellball_manager.gd` 3D ainda duplica a base. Validar
+> no editor antes de considerar a Fase 0 100% fechada.
+
+> **Nota de validação (2026-08):** a implementação da Fase 0 foi validada em
+> **modo headless do Godot 4.7.2** com `tests/netcode/validate_scripts.gd`
+> (`load()` por caminho, sem depender do cache de classes globais, que falha no
+> executável do Steam): **todos os 12 scripts da Fase 0 carregam OK**. As **5
+> cenas** (`hellball_arena`, `hellball_platform`, `hellball_topdown`,
+> `magnet_arena`, `sword_arena`) carregam **sem erro de script**, e
+> `tests/netcode/simulation_test.gd` retorna **CONVERGENCE: PASS**.
+>
+> **Bug encontrado e corrigido:** o `ArenaTopdownPlayerBase` redeclarava
+> `var dashing` (já existente em `HellballPlayer2DBase` após a CRÍTICA 3), o que
+> impedia o registro da classe e derrubava a cadeia `magnet`/`sword`
+> ("Could not resolve class ArenaTopdownPlayerBase"). Removida a redeclaração —
+> a cadeia agora compila.
+>
+> **Ainda pendente:** mensurar a meta **resposta < 100 ms** (game feel) requer
+> jogar o jogo interativamente — **não é verificável em headless**. A Fase 0
+> instrumentou isso: autoload `TelemetryStats`
+> (`scripts/audio/telemetry_stats.gd`) + painel no HUD (tecla **F3**).
+> `tests/netcode/telemetry_test.gd` prova o pipeline de medição. Rodar uma
+> partida do Hellball e apertar **F3** confirma se o p95 de resposta está < 100 ms.
+
+> **Status da Fase 0 (2026-08): IMPLEMENTADO e VERIFICADO.** Todos os itens de
+> engenharia concluídos e validados no Godot 4.7.2 headless: **convergência
+> determinística** (`simulation_test.gd` → PASS), **5 cenas 2D/3D sem erro de
+> script**, e **pipeline de medição + gate <100ms** (`telemetry_test.gd` → OK).
+> A **resposta real** foi medida com `tests/netcode/response_probe.tscn`
+> (autoloads reais): **punch p95 = 0–1 ms, teleport p95 = 1 ms** — muito abaixo
+> de 100 ms. Como `begin()`/`mark()` são síncronos (sem `await` entre input e
+> primeiro feedback), a resposta do Hellball é essencialmente 1 frame.
+> A instrumentação foi corrigida para medir `input → primeira resposta`
+> (sem inflar com windup/antecipação).
+
 ---
 
 ## 4. Minigame: ESPADAS (Duelo de Espadas)

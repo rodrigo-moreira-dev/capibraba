@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hellball Plataforma — Estudo de Caso (HTML)</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden;
+    font-family: monospace; color: #fff; }
+  #wrap { display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 100vh; gap: 8px; }
+  canvas { image-rendering: pixelated; background: #000; border: 1px solid #333; }
+  #help { font-size: 13px; color: #ffa300; text-align: center; line-height: 1.5; }
+  #help b { color: #fff; }
+  kbd { background: #222; border: 1px solid #555; border-radius: 3px; padding: 1px 5px; color: #fff; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game" width="1024" height="512"></canvas>
+  <div id="help">
+    <b>Hellball Plataforma</b> — última capivara de pé vence · <kbd>A</kbd><kbd>D</kbd> mover ·
+    <kbd>W</kbd>/<kbd>Espaço</kbd> pular · <kbd>S</kbd> descer de plataforma ·
+    <kbd>SHIFT</kbd> barrigada (dash + arremessa) · <b>Botão esq.</b> bola de fogo (segure p/ carregar, até 2s) ·
+    <b>Botão dir.</b> ou <kbd>C</kbd> = selo (4s) · <kbd>R</kbd> reiniciar
+  </div>
+</div>
+<script>
+"use strict";
+// ── Hellball Plataforma — estudo de caso HTML ─────────────────────────────
+// Port de hellball_proto.p8 (PICO-8). Mesmas 3 mecânicas:
+//   Barrigada (Z): empurra + parry (reflete projétil) + micro-pulo
+//   Bola de Fogo (X): segure p/ carregar, solte p/ disparar (empurra; dano = leveza)
+//   Selo (C): selo viajante; re-ative p/ teleportar; atingir rival = troca
+// Leveza acumula com dano (quem apanha fica mais leve → mais knockback).
+// Você é o jogador 1 (roxo); os demais são bots.
+
+const W = 256, H = 128;          // mundo em "unidades PICO-8" (arena 2× na largura)
+const LAVA_Y = 116;
+const GRAV = 0.24;
+const MAX_PLAYERS = 4;
+
+let players = [], projectiles = [], seals = [], sparks = [];
+let hitstop = 0, shake = 0, winner = 0, round_done = false, frame = 0;
+
+const ground_top = LAVA_Y - 28;
+// Arena duplicada lado a lado (2× na largura); bordas retrocedem para deixar
+// espaço para os jogadores caírem na lava pelas laterais.
+const platforms = [
+  { x: 28, y: ground_top,      w: 200, h: 28 }, // base recuada (28..228)
+  { x: 40, y: ground_top - 12, w: 30,  h: 6 },  // plataforma alta esq
+  { x: 186,y: ground_top - 12, w: 30,  h: 6 },  // plataforma alta dir
+  { x: 113,y: ground_top - 22, w: 30,  h: 6 },  // plataforma central
+];
+
+// paleta PICO-8
+const PAL = {
+  bg: '#000', plat: '#fff1e8', plat2: '#5f574f', lava: '#ffa300', lava2: '#ff004d',
+  seal: '#29adff', fire: '#ffa300', txt: '#fff1e8', dim: '#ffec27',
+  players: ['#7e2553', '#008751', '#83769c', '#ffccaa'], // roxo, verde, lavanda, pêssego
+  white: '#fff1e8', black: '#000',
+};
+
+const rndi = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+function new_player(id) {
+  return {
+    id, x: 40 + (id - 1) * 56, y: 60, vx: 0, vy: 0, w: 7, h: 9,
+    facing: id % 2 === 0 ? -1 : 1, on_ground: false,
+    belly_cooldown: 0, belly_anim: 0, fire_charge: 0, fire_charging: false, fire_cooldown: 0,
+    seal_active: null, seal_cooldown: 0, air_jumps: 1,
+    lava_hits: 0, knock_flash: 0, alive: true, dead_t: 0,
+    bot: id !== 1, dir: 1, think: rndi(10, 40), color: PAL.players[(id - 1) % 4],
+  };
+}
+function init() {
+  players = []; projectiles = []; seals = []; sparks = [];
+  for (let i = 1; i <= MAX_PLAYERS; i++) players.push(new_player(i));
+  winner = 0; round_done = false;
+}
+function spark(x, y, color, n) {
+  for (let i = 0; i < (n || 6); i++)
+    sparks.push({ x, y, vx: rndi(-10, 10) / 10, vy: rndi(-16, 2) / 10, color, life: rndi(8, 18) });
+}
+function impact(st) { hitstop = Math.max(hitstop, st); shake = Math.max(shake, st * 3); }
+
+// ── física ────────────────────────────────────────────────────────────────
+function is_on_platform(p, px, py) {
+  if (p.vy < 0) return null;
+  for (const pl of platforms)
+    if (px >= pl.x && px <= pl.x + pl.w && py > pl.y && py <= pl.y + 4) return pl.y;
+  return null;
+}
+function physics(p, move) {
+  p.vy += GRAV;
+  if (p.bot) {
+    if (p.think <= 0) { p.think = rndi(20, 46); p.dir = rndi(0, 26) === 0 ? 0 : p.dir; if (rndi(0, 24) === 0) p.dir = -p.dir; }
+    p.think -= 1; move = p.dir;
+    if (rndi(0, 90) === 0 && p.fire_charge === 0) p.fire_charging = true;
+    if (p.fire_charge >= 1) p.fire_projectile = true;
+    if (rndi(0, 160) === 0) do_belly(p);
+    if (rndi(0, 220) === 0) do_seal(p);
+  }
+  // barrigada em curso: mantém o impulso do dash (não deixa o clamp cortar)
+  if (p.belly_anim > 0) {
+    p.vx = p.facing * 1.7;
+  } else {
+    p.vx = clamp(p.vx + move * 0.28, -1.5, 1.5);
+    if (move === 0) p.vx *= 0.78;
+  }
+  if (move !== 0) p.facing = move > 0 ? 1 : -1;
+  p.x += p.vx; p.x = clamp(p.x, 2, W - 2 - p.w);
+  p.y += p.vy;
+  p.on_ground = false;
+  const gy = is_on_platform(p, p.x + p.w / 2, p.y + p.h);
+  if (gy) { p.y = gy - p.h; p.vy = 0; p.on_ground = true; p.air_jumps = 1; }
+  if (p.y > LAVA_Y && p.alive) { p.alive = false; p.dead_t = 60; impact(0.2); spark(p.x + p.w / 2, LAVA_Y, PAL.lava, 14); }
+}
+
+// ── ações ─────────────────────────────────────────────────────────────────
+function do_belly(p) {
+  if (p.belly_cooldown > 0 || !p.alive) return;
+  p.belly_cooldown = 60; // 2s @30fps
+  p.belly_anim = 10;
+  // mini dash para frente (mobilidade reduzida pela metade) + leve pop
+  p.vx = p.facing * 1.7;
+  p.vy = Math.min(p.vy, -0.4);
+  impact(0.12); spark(p.x + p.w / 2, p.y + 6, PAL.seal, 5);
+}
+function fire_projectile(p) {
+  p.fire_charging = false;
+  p.fire_cooldown = 30; // 1s @30fps
+  const charge = p.fire_charge; // 0..1 (até 2s de carga)
+  const pow = 0.5 + charge * 2.2;        // velocidade
+  const force = 3.0 + charge * 4.0;      // knockback (maior com carga)
+  const dmg = 1 + Math.round(charge * 2); // leveza/dano extra com carga
+  projectiles.push({ x: p.x + p.w / 2 + p.facing * 6, y: p.y + 3, vx: p.facing * pow, vy: 0,
+    owner: p.id, alive: true, life: 130, force, dmg });
+  impact(0.1); spark(p.x + p.w / 2 + p.facing * 6, p.y + 3, PAL.fire, 4);
+  p.fire_charge = 0;
+}
+function do_fire(p) {
+  if (p.fire_cooldown > 0) return;
+  if (p.fire_charging) {
+    // carga máxima = 2 segundos (60 frames); ao atingir, dispara sozinha
+    p.fire_charge = Math.min(1, p.fire_charge + 1 / 60);
+    if (p.fire_charge >= 1 && (!p.bot || p.fire_projectile)) { fire_projectile(p); p.fire_projectile = false; }
+  }
+}
+function do_seal(p) {
+  if (p.seal_cooldown > 0 || !p.alive) return;
+  p.seal_cooldown = 120; // 4s @30fps
+  // 2ª ativação: teleporta para o selo (a troca com rival acontece na colisão)
+  if (p.seal_active && p.seal_active.alive) {
+    const s = p.seal_active;
+    p.x = s.x - p.w / 2; p.y = s.y - p.h; p.vy = 0;
+    impact(0.16); spark(p.x + p.w / 2, p.y + p.h / 2, PAL.seal, 10);
+    s.alive = false; p.seal_active = null; return;
+  }
+  const s = { x: p.x + p.w / 2 + p.facing * 6, y: p.y + 3, vx: p.facing * 1.0, vy: 0,
+    owner: p.id, alive: true, planted: false };
+  seals.push(s); p.seal_active = s; spark(s.x, s.y, PAL.seal, 5);
+}
+function swap_players(a, b) {
+  const ax = a.x, ay = a.y;
+  a.x = b.x; a.y = b.y; b.x = ax; b.y = ay;
+  a.vy = 0; b.vy = 0; a.vx = 0; b.vx = 0; a.seal_active = null; b.seal_active = null;
+  impact(0.2); spark(a.x + a.w / 2, a.y + a.h / 2, PAL.seal, 10); spark(b.x + b.w / 2, b.y + b.h / 2, PAL.seal, 10);
+}
+function knockback(target, px, py, force) {
+  const light = 1 + target.lava_hits * 0.22;
+  const dx = target.x + target.w / 2 - px, dy = target.y + target.h / 2 - py;
+  const len = Math.sqrt(dx * dx + dy * dy) + 0.001;
+  target.vx += dx / len * force * light;
+  target.vy += dy / len * force * light * 0.5;
+  target.lava_hits += 1; target.knock_flash = 8;
+  impact(force * 0.08); spark(target.x + target.w / 2, target.y + target.h / 2, PAL.white, 8);
+}
+function explosion(x, y) {
+  impact(0.25); spark(x, y, PAL.lava2, 18);
+  for (const p of players) if (p.alive && Math.abs(p.x + p.w / 2 - x) < 26) knockback(p, x, y, 6.0);
+}
+
+// ── colisões ──────────────────────────────────────────────────────────────
+function resolve_collisions() {
+  for (let pi = projectiles.length - 1; pi >= 0; pi--) {
+    const pr = projectiles[pi]; let skip = !pr.alive;
+    if (!skip) { pr.x += pr.vx; pr.y += pr.vy; pr.life -= 1; if (pr.life <= 0) { pr.alive = false; skip = true; } }
+    if (!skip) {
+      for (let pj = pi - 1; pj >= 0; pj--) {
+        const other = projectiles[pj];
+        if (other.alive && Math.abs(pr.x - other.x) < 6 && Math.abs(pr.y - other.y) < 6) {
+          explosion(pr.x, pr.y); pr.alive = false; other.alive = false; skip = true; break;
+        }
+      }
+    }
+    if (!skip && (pr.x < -6 || pr.x > W + 6 || pr.y > LAVA_Y)) { pr.alive = false; skip = true; }
+    if (!skip) {
+      for (const p of players) {
+        // ignora o próprio dono (evita a bola agredir quem a disparou)
+        if (p.alive && p.id !== pr.owner && Math.abs(pr.x - (p.x + p.w / 2)) < 7 && Math.abs(pr.y - (p.y + p.h / 2)) < 9) {
+          knockback(p, pr.x, pr.y, pr.vx >= 0 ? pr.force : -pr.force);
+          // dano/leveza extra conforme a carga da bola
+          p.lava_hits += (pr.dmg || 1) - 1;
+          pr.alive = false; break;
+        }
+      }
+    }
+  }
+  for (let si = seals.length - 1; si >= 0; si--) {
+    const s = seals[si];
+    if (s.alive) {
+      s.x += s.vx; s.y += s.vy;
+      if (s.vx !== 0 && (s.x < 2 || s.x > W - 2)) { s.planted = true; s.vx = 0; }
+      const gy = is_on_platform(s, s.x, s.y + 3);
+      if (!s.planted && gy) { s.planted = true; s.vx = 0; s.y = gy - 3; }
+      // ao atingir outro jogador: troca os DOIS de lugar imediatamente
+      for (const p of players) {
+        if (p.id !== s.owner && p.alive && Math.abs(s.x - (p.x + p.w / 2)) < 6 && Math.abs(s.y - (p.y + p.h / 2)) < 8) {
+          for (const owner of players) {
+            if (owner.id === s.owner && owner.alive) { swap_players(owner, p); break; }
+          }
+          s.alive = false;
+          for (const owner of players) if (owner.id === s.owner) owner.seal_active = null;
+          break;
+        }
+      }
+    }
+  }
+}
+function apply_belly_hits() {
+  for (const p of players) {
+    if (p.alive && p.belly_anim > 0) {
+      const hx = p.x + p.w / 2 + p.facing * 8, hy = p.y + p.h / 2;
+      // arremessa jogadores atingidos para longe (direção do dash)
+      for (const o of players) {
+        if (o !== p && o.alive && Math.abs(o.x + o.w / 2 - hx) < 10 && Math.abs(o.y + o.h / 2 - hy) < 12) {
+          o.vx = p.facing * 7.0; o.vy = -4.5;
+          o.lava_hits += 1; o.knock_flash = 8;
+          impact(0.25); spark(o.x + o.w / 2, o.y, PAL.white, 10);
+        }
+      }
+      // reflete projéteis, arremessando-os de volta com mais força
+      for (const pr of projectiles) {
+        if (pr.alive && Math.abs(pr.x - hx) < 9 && Math.abs(pr.y - hy) < 9) {
+          pr.vx = -pr.vx * 1.5; pr.vy = 0; pr.owner = p.id;
+          impact(0.25); spark(pr.x, pr.y, PAL.seal, 10);
+        }
+      }
+    }
+  }
+}
+function check_winner() {
+  let alive = 0;
+  for (const p of players) if (p.alive) alive++;
+  if (alive <= 1 && !round_done) {
+    round_done = true;
+    for (const p of players) if (p.alive) winner = p.id;
+  }
+}
+
+// ── input / update ────────────────────────────────────────────────────────
+const keys = {};
+const pressed = {};
+document.addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if (!keys[k]) pressed[k] = true;
+  keys[k] = true;
+  if (['a','d','w','s','z','x','c','r',' '].includes(k)) e.preventDefault();
+});
+document.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+// Selo também no botão direito do mouse (e não abre menu de contexto)
+// (usa getElementById direto — `canvas` ainda não foi declarado nesta altura)
+// Bola de fogo no botão esquerdo (segure = carrega), selo no botão direito.
+let mouse0_down = false;
+const gameCanvas = document.getElementById('game');
+gameCanvas.addEventListener('contextmenu', e => e.preventDefault());
+gameCanvas.addEventListener('mousedown', e => {
+  if (e.button === 0) { mouse0_down = true; e.preventDefault(); }
+  if (e.button === 2) { pressed['selo'] = true; e.preventDefault(); }
+});
+gameCanvas.addEventListener('mouseup', e => { if (e.button === 0) mouse0_down = false; });
+gameCanvas.addEventListener('mouseleave', () => { mouse0_down = false; });
+
+function do_jump(p) {
+  // W ou Espaço: pulo (e pulo duplo) — pulo contido (metade do anterior)
+  if (p.on_ground) { p.vy = -2.6; p.on_ground = false; p.air_jumps = 1; }
+  else if (p.air_jumps > 0) { p.vy = -2.3; p.air_jumps -= 1; }
+}
+function do_drop(p) {
+  // S: desce através de plataforma 1-way (se não estiver no chão principal)
+  if (p.on_ground && p.y + p.h < ground_top) { p.on_ground = false; p.y += 1; p.vy = 1.0; }
+}
+function handle_input(p) {
+  if (!p.alive) return 0;
+  let move = 0;
+  if (keys['a']) move -= 1;
+  if (keys['d']) move += 1;
+  if (pressed['w'] || pressed[' ']) do_jump(p);
+  if (keys['s']) do_drop(p);
+  if (pressed['shift']) do_belly(p);   // SHIFT = barrigada
+  // Bola de fogo: botão esquerdo do mouse (segure = carrega, solte = dispara)
+  if (mouse0_down) p.fire_charging = true;
+  else if (p.fire_charging) fire_projectile(p);
+  // Selo: botão direito do mouse ou tecla C
+  if (pressed['c'] || pressed['selo']) do_seal(p);
+  return move;
+}
+function update() {
+  frame += 1;
+  if (hitstop > 0) { hitstop -= 0.5; return; }
+  if (keys['r']) init();
+
+  const move = round_done ? 0 : handle_input(players[0]);
+  for (const p of players) {
+    if (p.alive) {
+      physics(p, p.id === 1 ? move : p.dir);
+      p.belly_cooldown = Math.max(0, p.belly_cooldown - 1);
+      p.seal_cooldown = Math.max(0, p.seal_cooldown - 1);
+      p.fire_cooldown = Math.max(0, p.fire_cooldown - 1);
+      if (p.belly_anim > 0) p.belly_anim -= 1;
+      if (p.knock_flash > 0) p.knock_flash -= 1;
+      if (p.bot) do_fire(p);
+      if (p.id === 1) do_fire(p);
+    } else if (p.dead_t > 0) {
+      p.dead_t -= 1;
+      if (p.dead_t <= 0) {
+        p.alive = true; p.x = 40 + (p.id - 1) * 56; p.y = 40; p.vy = 0; p.vx = 0;
+        p.lava_hits = 0; p.fire_charge = 0; p.fire_charging = false; p.seal_active = null;
+      }
+    }
+  }
+  apply_belly_hits();
+  resolve_collisions();
+  check_winner();
+  for (let i = sparks.length - 1; i >= 0; i--) {
+    const s = sparks[i]; s.x += s.vx / 8; s.y += s.vy / 8; s.vy += 0.1; s.life -= 1;
+    if (s.life <= 0) sparks.splice(i, 1);
+  }
+  if (shake > 0) shake *= 0.86;
+  // limpa o "pressionado neste frame" SÓ DEPOIS de handle_input ler (fim do update)
+  Object.keys(pressed).forEach(k => delete pressed[k]);
+}
+
+// ── render ────────────────────────────────────────────────────────────────
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+const SCALE = 4; // 256 → 1024 (arena 2×), 128 → 512 altura
+
+function rect(x, y, w, h, color) { ctx.fillStyle = color; ctx.fillRect(x * SCALE, y * SCALE, w * SCALE, h * SCALE); }
+function draw() {
+  ctx.fillStyle = PAL.bg; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const ox = shake > 0.3 ? rndi(-1, 1) * SCALE : 0, oy = shake > 0.3 ? rndi(-1, 1) * SCALE : 0;
+  ctx.save(); ctx.translate(ox, oy);
+
+  // lava animada
+  for (let x = 0; x < W; x += 4) {
+    rect(x, LAVA_Y, 4, H - LAVA_Y, PAL.lava);
+    if (Math.floor(frame / 6 + x / 4) % 2 === 0) rect(x, LAVA_Y, 4, 2, PAL.lava2);
+  }
+  // plataformas
+  for (const pl of platforms) {
+    rect(pl.x, pl.y, pl.w, Math.min(pl.h, 6), PAL.plat2);
+    rect(pl.x, pl.y, pl.w, 2, PAL.plat);
+  }
+  // selos
+  for (const s of seals) if (s.alive) { ctx.fillStyle = PAL.seal; ctx.beginPath(); ctx.arc(s.x * SCALE, s.y * SCALE, 2 * SCALE, 0, 7); ctx.fill(); }
+  // bolas
+  for (const pr of projectiles) if (pr.alive) { ctx.fillStyle = PAL.fire; ctx.beginPath(); ctx.arc(pr.x * SCALE, pr.y * SCALE, 2 * SCALE, 0, 7); ctx.fill(); }
+  // partículas
+  for (const s of sparks) { ctx.fillStyle = s.color; ctx.fillRect(s.x * SCALE, s.y * SCALE, SCALE, SCALE); }
+  // players
+  for (const p of players) draw_player(p);
+  ctx.restore();
+  draw_hud();
+}
+function draw_player(p) {
+  const x = p.x, y = p.y;
+  if (!p.alive) { ctx.fillStyle = PAL.plat2; ctx.fillRect((x + 2) * SCALE, (y + 2) * SCALE, SCALE, SCALE); return; }
+  // indicador de carga da bola de fogo (círculo cresce; muda de cor perto do máx)
+  if (p.fire_charging || p.fire_charge > 0) {
+    const r = (2 + p.fire_charge * 6) * SCALE;
+    const col = p.fire_charge >= 0.8 ? PAL.lava2 : PAL.fire;
+    ctx.strokeStyle = col; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc((x + p.w / 2) * SCALE, (y + p.h / 2) * SCALE, r, 0, 7); ctx.stroke();
+    ctx.lineWidth = 1;
+  }
+  const c = p.knock_flash > 0 ? PAL.white : p.color;
+  rect(x, y, p.w, p.h, c);
+  // olho na direção
+  const ex = p.facing > 0 ? 5 : 1;
+  rect(x + ex, y + 2, 2, 2, PAL.white);
+  rect(x + (p.facing > 0 ? 6 : 2), y + 3, 1, 1, PAL.black);
+  // barrigada (flash)
+  if (p.belly_anim > 0) rect(x + (p.facing > 0 ? p.w + 1 : -2), y + 3, 3, 3, PAL.seal);
+  // leveza (topo claro)
+  if (p.lava_hits > 0) rect(x - 1, y - 1, p.w + 2, 1, PAL.white);
+  ctx.fillStyle = PAL.txt; ctx.font = `${Math.floor(SCALE * 1.1)}px monospace`;
+  ctx.fillText(String(p.id), x * SCALE - 2 * SCALE, y * SCALE - 4 * SCALE);
+}
+function draw_hud() {
+  ctx.fillStyle = PAL.txt; ctx.font = `${Math.floor(SCALE * 1.3)}px monospace`;
+  ctx.fillText('HELLBALL PLATAFORMA', 8, 16);
+  ctx.fillStyle = PAL.dim;
+  ctx.fillText('A/D mover  W/Esp pular  S descer  SHIFT barrida  botão-esq bola(2s)  botão-dir/C selo(4s)  R reset', 8, 16 + SCALE * 3);
+  if (round_done) {
+    ctx.fillStyle = PAL.lava2; ctx.font = `${Math.floor(SCALE * 2.4)}px monospace`;
+    ctx.fillText('VENCEDOR: ' + winner, 30 * SCALE, 60 * SCALE);
+    ctx.fillStyle = PAL.txt; ctx.font = `${Math.floor(SCALE * 1.2)}px monospace`;
+    ctx.fillText('pressione R p/ reiniciar', 30 * SCALE, 70 * SCALE);
+  }
+}
+
+init();
+setInterval(() => { update(); draw(); }, 1000 / 30);
+</script>
+</body>
+</html>

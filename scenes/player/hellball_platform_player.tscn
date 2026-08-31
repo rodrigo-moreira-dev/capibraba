@@ -3,8 +3,8 @@
 [ext_resource type="Script" path="res://scripts/player/hellball_platform_player.gd" id="1_pp"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_pp"]
-radius = 0.4
-height = 1.5
+radius = 0.9
+height = 3.2
 
 [sub_resource type="SceneReplicationConfig" id="ReplicationConfig_pp"]
 properties/0/path = NodePath(".:position")
@@ -28,7 +28,7 @@ properties/3/watch_mode = 0
 script = ExtResource("1_pp")
 
 [node name="Collision" type="CollisionShape2D" parent="."]
-position = Vector2(0, -0.3)
+position = Vector2(0, -1.0)
 shape = SubResource("CapsuleShape2D_pp")
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]

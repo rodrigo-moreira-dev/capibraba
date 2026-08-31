@@ -9,6 +9,7 @@ class_name HellballPlayer2DBase
 const CHARGE_ORB_SCENE := preload("res://scenes/player/charge_orb_2d.tscn")
 const TELEPORT_ORB_SCENE := preload("res://scenes/player/teleport_orb_2d.tscn")
 const NAME_LABEL_SCRIPT := preload("res://scripts/ui/name_label_2d.gd")
+const PICO8_CAPYBARA := preload("res://scripts/player/pico8_capybara.gd")
 
 const PALETTE: Array[Color] = [
 	Color(0.72, 0.56, 0.28),
@@ -54,13 +55,14 @@ var _life_timer   := 0.0
 
 var guarding := false
 var facing := 1.0
+var dashing := false  # replicado (usado p/ i-frames em dash); as subclasses setam
 var _base_scale := Vector2.ONE
 var _squash_scale := Vector2.ONE
 var _was_grounded := false
 var _hitstop_count := 0
 
 var _visual: Node2D
-var _body: Polygon2D
+var _body: Sprite2D
 var _shield: Polygon2D
 var _charge_indicator: Polygon2D
 var _name_label
@@ -71,6 +73,91 @@ func _ready() -> void:
 	_build_visual()
 
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# ITENS GENÉRICOS (Fase 0) — consulta MatchSettings/ItemCatalog
+# ═══════════════════════════════════════════════════════════════════════════════
+# Os itens do minigame vêm de `MatchSettings.items_pool` limitado a
+# `item_slots`. As ações básicas (Punch/Guard/Dash) são consultadas por
+# `MatchSettings.get_enabled_basic_actions()`. Isso substitui o comportamento
+# de "sempre ter Charge + Teleport" por um pool configurável.
+
+func _has_item(id: String) -> bool:
+	return MatchSettings.get_enabled_items().has(id)
+
+
+func _has_basic(action: String) -> bool:
+	var actions: Dictionary = MatchSettings.get_enabled_basic_actions()
+	return actions.get(action, true)
+
+
+func _item_data(id: String) -> Dictionary:
+	return ItemCatalog.get_item(id)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# REPLICAÇÃO DE ESTADO (CRÍTICA 3): ataque/defesa visível para todos os peers
+# ═══════════════════════════════════════════════════════════════════════════════
+# `guarding`, `facing` e `dashing` são estado de "momento" que todos os peers
+# precisam ver para a resolução de parry/knockback ser justa e consistente.
+# Ao ler isso localmente (cliente autoritário), transmitimos via `_broadcast_state`
+# para os demais, que o aplicam localmente. O servidor continua autoritativo para
+# vidas/morte/troca (gerente); aqui só garantimos que TODOS veem o mesmo momento.
+var _last_sync_guarding: bool = false
+var _last_sync_facing: float = 1.0
+var _last_sync_pole: int = 0
+var _last_sync_swinging: bool = false
+
+## Campos replicáveis. Subclasses podem sobrescrever para incluir `pole`/`swinging`.
+func _replicated_state() -> Dictionary:
+	return {
+		"guarding": guarding,
+		"facing": facing,
+		"dashing": dashing,
+		"pole": _last_sync_pole,
+		"swinging": _last_sync_swinging,
+	}
+
+
+## Chamado no cliente autoritário a cada frame: se mudou, transmite o estado.
+func _replicate_state() -> void:
+	if not is_multiplayer_authority():
+		return
+	var st := _replicated_state()
+	if st.guarding == _last_sync_guarding \
+		and st.facing == _last_sync_facing \
+		and st.pole == _last_sync_pole \
+		and st.swinging == _last_sync_swinging:
+		return
+	_last_sync_guarding = st.guarding
+	_last_sync_facing    = st.facing
+	_last_sync_pole      = st.pole
+	_last_sync_swinging  = st.swinging
+	# Multiplayer: transmite para os demais peers. Sem rede, nada a fazer.
+	if multiplayer.has_multiplayer_peer():
+		_broadcast_replicated_state.rpc(st.guarding, st.facing, st.pole, st.swinging)
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _broadcast_replicated_state(grd: bool, face: float, pol: int, swg: bool) -> void:
+	# Anti-cheat (CRÍTICA 4): só aceita o estado vindo da AUTORIDADE deste
+	# jogador (o dono do nó). Um peer malicioso não pode forjar o estado de outro.
+	var sid := multiplayer.get_remote_sender_id()
+	if sid != 0 and sid != get_multiplayer_authority():
+		return
+	# Aplica o estado replicado nos peers NÃO-autoritários (quem vê o outro).
+	if is_multiplayer_authority():
+		return
+	guarding = grd
+	facing   = face
+	dashing  = false
+	_apply_replicated_extras(pol, swg)
+
+
+## Subclasses registram estado extra (ex.: polo, swinging). Padrão: ignora.
+func _apply_replicated_extras(_pol: int, _swg: bool) -> void:
+	pass
+
+
 func _physics_process(delta: float) -> void:
 	_charge_cd   = maxf(_charge_cd   - delta, 0.0)
 	_teleport_cd = maxf(_teleport_cd - delta, 0.0)
@@ -79,9 +166,11 @@ func _physics_process(delta: float) -> void:
 	_life_timer   = maxf(_life_timer   - delta, 0.0)
 	_update_guard(delta)
 	_update_visual(delta)
+	_replicate_state()
 	if not is_multiplayer_authority():
 		return
-	_update_charge(delta)
+	if _has_item("charge_gun"):
+		_update_charge(delta)
 	_move(delta)
 	move_and_slide()
 	_post_move_2d()
@@ -122,9 +211,9 @@ func _lava_knockback() -> Vector2:
 func _unhandled_input(event: InputEvent) -> void:
 	if not is_multiplayer_authority():
 		return
-	if event.is_action_pressed("teleport_gun"):
+	if _has_item("teleport_gun") and event.is_action_pressed("teleport_gun"):
 		_on_teleport_pressed()
-	if event.is_action_pressed("punch"):
+	if _has_basic("punch") and event.is_action_pressed("punch"):
 		_try_punch()
 	if event.is_action_pressed("jump"):
 		_on_jump_pressed()
@@ -159,8 +248,13 @@ func _try_punch() -> void:
 	if _punch_cd > 0.0 or guarding:
 		return
 	_punch_cd = PUNCH_COOLDOWN
+	TelemetryStats.begin("punch_action")
 	SfxBus.play("punch")
 	_squash(0.92, 1.08, 0.08)
+	# A "resposta" da ação é o PRIMEIRO feedback (som + squash), que acontece já
+	# aqui — antes do windup. Medir depois do windup inflacionaria a métrica com
+	# a janela de antecipação, não com a latência de resposta.
+	TelemetryStats.mark("punch_action")
 	await get_tree().create_timer(PUNCH_WINDUP).timeout
 	if not is_inside_tree():
 		return
@@ -203,7 +297,8 @@ func _update_guard(_delta: float) -> void:
 		if is_instance_valid(_shield):
 			_shield.visible = guarding
 		return
-	guarding = Input.is_action_pressed("guard")
+	# Guard é uma ação básica; pode ser restrita pelo minigame (sempre documentado).
+	guarding = _has_basic("guard") and Input.is_action_pressed("guard")
 	if is_instance_valid(_shield):
 		_shield.visible = guarding
 
@@ -218,6 +313,7 @@ func _update_charge(delta: float) -> void:
 			_is_charging  = true
 			_charge_power = 0.0
 			_charge_timer = 0.0
+			TelemetryStats.begin("charge_action")
 		elif _is_charging:
 			_charge_timer += delta
 			_charge_power  = clampf(_charge_timer / CHARGE_MAX_TIME, 0.0, 1.0)
@@ -228,6 +324,8 @@ func _update_charge(delta: float) -> void:
 		_charge_indicator.visible = _is_charging
 		if _is_charging:
 			_charge_indicator.scale = Vector2.ONE * (0.8 + _charge_power * 1.6)
+			# Resposta do charge: o indicador de carga aparece ao pressionar.
+			TelemetryStats.mark("charge_action")
 
 
 func _fire_charge() -> void:
@@ -290,7 +388,10 @@ func _on_teleport_pressed() -> void:
 			global_position = pos
 			velocity        = Vector2.ZERO
 			_teleport_cd    = TELEPORT_COOLDOWN
+			# 2ª ação (teletransporte) — resposta própria, não confundir com o lançamento.
+			TelemetryStats.begin("teleport_move")
 			SfxBus.play("teleport")
+			TelemetryStats.mark("teleport_move")
 			_spawn_burst_2d(pos, Color(0.3, 0.8, 1.0, 0.9), 18, 0.35, 90.0)
 			_shake_2d(0.3, 0.15)
 		return
@@ -302,6 +403,10 @@ func _on_teleport_pressed() -> void:
 	get_tree().current_scene.add_child(orb)
 	orb.global_position = global_position + dir * 1.4
 	_teleport_orb = orb
+	# Resposta do lançamento: o orbe aparece/som toca imediatamente.
+	TelemetryStats.begin("teleport_throw")
+	SfxBus.play("teleport")
+	TelemetryStats.mark("teleport_throw")
 
 
 func on_orb_consumed(_orb: Node2D) -> void:
@@ -360,11 +465,11 @@ func play_swap_flash() -> void:
 func flash_hurt_2d() -> void:
 	if not is_instance_valid(_body):
 		return
-	var original := _body.color
-	_body.color = Color.WHITE
+	var original := _body.self_modulate
+	_body.self_modulate = Color.WHITE
 	await get_tree().create_timer(0.08).timeout
 	if is_instance_valid(_body):
-		_body.color = original
+		_body.self_modulate = original
 
 
 func _hit_stop(duration := 0.05) -> void:
@@ -418,27 +523,24 @@ func _build_visual() -> void:
 	_visual.name = "Visual"
 	add_child(_visual)
 
-	# Corpo (elipse)
-	_body = Polygon2D.new()
-	_body.polygon = _circle_polygon(1.0)
-	_body.scale = Vector2(0.55, 0.75)
-	_body.color = color
-	_visual.add_child(_body)
+	# Personagem em pixel art PICO-8 (Sprite2D). Base da capivara; o sprite real
+	# pode ser trocado depois por um asset, mantendo `Pico8Capybara.make_texture()`.
+	var sprite := Sprite2D.new()
+	sprite.texture = PICO8_CAPYBARA.make_texture()
+	sprite.name = "Pico8Sprite"
+	# O sprite é 16x16 px. Escala para o personagem ficar bem visível na arena
+	# (aprox. 40 px de altura). O deslocamento vertical alinha os "pés" à base
+	# do colisor.
+	sprite.scale = Vector2(2.4, 2.4)
+	sprite.position = Vector2(0, -16)
+	# Tinge pela cor do jogador (mantém a linguagem de cores sem mudar o sprite).
+	sprite.self_modulate = color
+	sprite.centered = true
+	_visual.add_child(sprite)
+	_body = sprite
 
-	# Orelhas
-	for side in [-1, 1]:
-		var ear := Polygon2D.new()
-		ear.polygon = _circle_polygon(0.18)
-		ear.color = color.darkened(0.18)
-		ear.position = Vector2(side * 0.34, -0.64)
-		_visual.add_child(ear)
-
-	# Olho (na direção da mira)
-	var eye := Polygon2D.new()
-	eye.polygon = _circle_polygon(0.09)
-	eye.color = Color.BLACK
-	eye.position = Vector2(0.2, -0.12)
-	_visual.add_child(eye)
+	# O sprite PICO-8 já tem corpo/orelhas/olho. O escudo e o indicador de carga
+	# continuam como visuais adicionais sobrepostos.
 
 	# Escudo de guarda
 	_shield = Polygon2D.new()

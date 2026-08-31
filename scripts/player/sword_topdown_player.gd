@@ -48,6 +48,20 @@ func _ready() -> void:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# REPLICAÇÃO DE ESTADO (CRÍTICA 3): todos os peers veem a janela ativa do golpe
+# ═══════════════════════════════════════════════════════════════════════════════
+
+func _replicated_state() -> Dictionary:
+	var st := super._replicated_state()
+	st.swinging = swinging
+	return st
+
+
+func _apply_replicated_extras(_pol: int, swg: bool) -> void:
+	swinging = swg
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # ITEM - ESPADA
 # ═══════════════════════════════════════════════════════════════════════════════
 
